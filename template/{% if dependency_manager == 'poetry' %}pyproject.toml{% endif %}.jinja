@@ -16,7 +16,8 @@ redis = "^5.0.0"
 django-redis = "^5.4.0"
 {% endif -%}
 gunicorn = "^22.0.0"
-python-json-logger = "^2.0.7"
+structlog = "^25.0"
+django-structlog = "^8.0"
 {% if api_style in ['drf', 'both'] -%}
 djangorestframework = "^3.15.0"
 drf-spectacular = "^0.27.0"

@@ -19,7 +19,8 @@ dependencies = [
 {% endif -%}
     "gunicorn>=22.0.0",
     "whitenoise[brotli]>=6.6.0",
-    "python-json-logger>=2.0.7",
+    "structlog>=25.0",
+    "django-structlog>=8.0",
 {% if api_style in ['drf', 'both'] -%}
     "djangorestframework>=3.15.0",
     "drf-spectacular>=0.27.0",

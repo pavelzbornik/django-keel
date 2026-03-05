@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 import environ
+import structlog
 
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -121,6 +122,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django_structlog.middlewares.RequestMiddleware",
 {% if auth_backend in ['allauth', 'both'] -%}
     "allauth.account.middleware.AccountMiddleware",
 {% endif -%}
@@ -391,30 +393,22 @@ EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="{{ project_slug }}@example.com")
 SERVER_EMAIL = env("SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
 
-# Logging
+# Logging (ADR-016: structlog wide-event logging)
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "verbose": {
-            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
-            "style": "{",
-        },
         "json": {
-            "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
-            "format": "%(asctime)s %(name)s %(levelname)s %(message)s",
+            "()": structlog.stdlib.ProcessorFormatter,
+            "processor": structlog.dev.ConsoleRenderer()
+            if DEBUG
+            else structlog.processors.JSONRenderer(),
         },
     },
     "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-            "formatter": "verbose" if DEBUG else "json",
-        },
+        "console": {"class": "logging.StreamHandler", "formatter": "json"},
     },
-    "root": {
-        "level": env("LOG_LEVEL", default="INFO"),
-        "handlers": ["console"],
-    },
+    "root": {"level": env("LOG_LEVEL", default="INFO"), "handlers": ["console"]},
     "loggers": {
         "django": {
             "handlers": ["console"],
@@ -437,6 +431,27 @@ LOGGING = {
 {% endif -%}
     },
 }
+
+structlog.configure(
+    processors=[
+        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.filter_by_level,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+        structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+    ],
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    wrapper_class=structlog.stdlib.BoundLogger,
+    cache_logger_on_first_use=True,
+)
+
+# GDPR: do not log raw IP addresses (ADR-016)
+DJANGO_STRUCTLOG_IP_LOGGING_ENABLED = False
 
 {% if use_stripe -%}
 # Stripe Configuration

@@ -37,48 +37,7 @@ CSP_FRAME_ANCESTORS = ("'none'",)
 # Database connection pooling
 DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=600)  # noqa: F405
 
-{% if observability_level != 'minimal' -%}
-# Logging - JSON format for production
-LOGGING = {  # noqa: F405
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "json": {
-            "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
-            "format": "%(asctime)s %(name)s %(levelname)s %(message)s %(pathname)s %(lineno)d",
-        },
-    },
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-            "formatter": "json",
-        },
-    },
-    "root": {
-        "level": env("LOG_LEVEL", default="INFO"),  # noqa: F405
-        "handlers": ["console"],
-    },
-    "loggers": {
-        "django": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "django.request": {
-            "handlers": ["console"],
-            "level": "ERROR",
-            "propagate": False,
-        },
-{% if use_celery -%}
-        "celery": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
-        },
-{% endif -%}
-    },
-}
-{% endif %}
+# Logging configured in base.py (ADR-016)
 
 {% if use_sentry -%}
 # Sentry
