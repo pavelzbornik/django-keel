@@ -1,3 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Django templates live outside frontend/ — explicit source needed */
+@source "../../templates/**/*.html";

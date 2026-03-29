@@ -32,6 +32,8 @@ When you select HTMX + Tailwind, you can choose how assets are delivered:
 - Proper CSS purging for smaller bundles
 - Hot Module Replacement (HMR) in development
 - Uses `django-vite` for seamless Django integration
+- Tailwind CSS v4 with native Vite plugin (`@tailwindcss/vite`) — no PostCSS config needed
+- CSS-first configuration via `@import "tailwindcss"` and `@source` directives
 
 **Development with Docker (Recommended):**
 ```bash
@@ -64,7 +66,7 @@ docker build -t myapp .  # Multi-stage build includes npm run build
 | Issue | Solution |
 |-------|----------|
 | Vite HMR not working in Docker | Ensure `VITE_DEV_SERVER_HOST=vite` is set in the Django web service environment |
-| Styles not updating | Check Tailwind is scanning `../templates/**/*.html` |
+| Styles not updating | Check `@source` directive in `styles.css` includes `../../templates/**/*.html` |
 | Assets 404 in production | Run `python manage.py collectstatic` after building |
 | `django_vite` template errors | Ensure `DEBUG=False` uses built manifest, not dev server |
 
