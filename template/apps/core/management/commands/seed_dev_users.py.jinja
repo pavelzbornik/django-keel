@@ -41,8 +41,25 @@ class Command(BaseCommand):
             user.email = spec.email
             user.set_password(password)
             user.save()
+            self._verify_email(user)
             if spec.setup is not None:
                 spec.setup(user)
+
+    @staticmethod
+    def _verify_email(user: Any) -> None:
+        """Mark the email verified so allauth mandatory-verification apps can log in.
+
+        No-op when django-allauth is not installed.
+        """
+        try:
+            from allauth.account.models import EmailAddress
+        except ImportError:
+            return
+        EmailAddress.objects.update_or_create(
+            user=user,
+            email=user.email,
+            defaults={"verified": True, "primary": True},
+        )
 
     def _report(self) -> None:
         self.stdout.write(self.style.SUCCESS("\nDev accounts seeded (DEBUG only):"))

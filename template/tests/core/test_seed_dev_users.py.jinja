@@ -51,3 +51,15 @@ def test_refuses_without_debug() -> None:
     with pytest.raises(CommandError):
         call_command("seed_dev_users")
     assert get_user_model().objects.count() == 0
+
+
+@override_settings(DEBUG=True)
+def test_seeded_admin_email_is_verified() -> None:
+    # allauth mandatory-verification apps need a verified EmailAddress to log in.
+    pytest.importorskip("allauth")
+    from allauth.account.models import EmailAddress
+
+    call_command("seed_dev_users")
+    assert EmailAddress.objects.filter(
+        email="admin@example.test", verified=True, primary=True
+    ).exists()
