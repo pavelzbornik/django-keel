@@ -1,0 +1,9 @@
+{% raw %}{% extends "account/email/base_message.txt" %}
+{% load i18n %}
+
+{% block content %}{% autoescape off %}{% blocktrans %}Confirm this email address to keep it linked to your {% endraw %}{{ project_name }}{% raw %} account.{% endblocktrans %}
+
+{% trans "Confirm your email:" %}
+{{ activate_url }}
+
+{% trans "If you didn't request this, you can safely ignore this email." %}{% endautoescape %}{% endblock content %}{% endraw %}
