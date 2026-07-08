@@ -151,6 +151,15 @@ background_tasks:
     {%- elif project_type == 'internal-tool' -%}celery
     {%- else -%}celery{%- endif -%}
 
+# Computed flag (T1 fix): many templates historically referenced `use_celery`,
+# which was never defined here. Define it as a derived, non-asked value so the
+# canonical gate stays `background_tasks in ['celery', 'both']` with one source
+# of truth.
+use_celery:
+  type: bool
+  default: "{{ background_tasks in ['celery', 'both'] }}"
+  when: false
+
 use_channels:
   type: bool
   help: Include Django Channels for WebSockets?
