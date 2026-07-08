@@ -1,0 +1,41 @@
+"""GDPR data-subject operations for the account (ADR-034 style: portability + erasure).
+
+``export_data`` serves the right to data portability (Art. 20); ``anonymize``
+serves the right to erasure (Art. 17). This scaffold only covers the account's
+own PII. When the project grows app-specific data owned by a user (projects,
+documents, uploads, ...), extend both functions at the marked seam below so the
+export/erasure stays complete.
+"""
+from django.db import transaction
+
+
+def export_data(user):
+    """Return everything the app knows about ``user`` as a JSON-serialisable dict."""
+    return {
+        "id": user.pk,
+        "email": user.email,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "date_joined": user.date_joined.isoformat(),
+        "last_login": user.last_login.isoformat() if user.last_login else None,
+        # TODO: merge in app-domain data owned by this user (e.g. serialize
+        # related querysets here) as the project grows past the account itself.
+    }
+
+
+@transaction.atomic
+def anonymize(user):
+    """Scrub the account's PII (Art. 17). Keeps the row so FK integrity survives.
+
+    Idempotent: a second call re-writes the same scrubbed fields.
+    """
+    # TODO: delete or anonymize app-domain rows owned by this user here, before
+    # scrubbing the account below (mirror this function's docstring as you add
+    # domain models with a user FK).
+
+    user.email = f"deleted-{user.pk}@anonymized.invalid"
+    user.first_name = ""
+    user.last_name = ""
+    user.is_active = False
+    user.set_unusable_password()
+    user.save(update_fields=["email", "first_name", "last_name", "is_active", "password"])
