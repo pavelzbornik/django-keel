@@ -308,6 +308,11 @@ ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 {% endif %}
 
+{% if frontend == 'htmx-tailwind' -%}
+# Redirect target after login (the dashboard shell)
+LOGIN_REDIRECT_URL = "/dashboard/"
+{% endif %}
+
 {% if api_style in ['drf', 'both'] -%}
 # Django REST Framework
 REST_FRAMEWORK = {

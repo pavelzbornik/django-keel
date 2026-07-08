@@ -1,0 +1,13 @@
+"""Account-settings + GDPR self-service routes (mounted at /account/)."""
+from django.urls import path
+
+from apps.users import views
+
+app_name = "account"
+
+urlpatterns = [
+    path("settings/", views.account_settings, name="settings"),
+    path("settings/export/", views.export_data, name="export"),
+    path("settings/delete/", views.delete_account, name="delete"),
+    path("settings/deleted/", views.account_deleted, name="deleted"),
+]

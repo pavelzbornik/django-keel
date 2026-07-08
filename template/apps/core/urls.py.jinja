@@ -9,4 +9,9 @@ from . import views
 
 urlpatterns = [
     path("", views.index, name="index"),
+{%- if frontend == 'htmx-tailwind' %}
+    path("dashboard/", views.dashboard, name="dashboard"),
+    path("terms/", views.terms, name="terms"),
+    path("privacy/", views.privacy, name="privacy"),
+{%- endif %}
 ]

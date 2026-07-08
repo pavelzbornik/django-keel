@@ -1,5 +1,8 @@
 """Core views."""
 from django.conf import settings
+{%- if frontend == 'htmx-tailwind' %}
+from django.contrib.auth.decorators import login_required
+{%- endif %}
 from django.http import HttpResponse, JsonResponse{% if frontend == 'htmx-tailwind' %}
 from django.shortcuts import render{% endif %}
 from django.template.loader import render_to_string
@@ -56,4 +59,24 @@ def sitemap(request):
     xml_content.append("</urlset>")
 
     return HttpResponse("\n".join(xml_content), content_type="application/xml")
+
+
+{%- if frontend == 'htmx-tailwind' %}
+
+
+@login_required
+def dashboard(request):
+    """Authenticated dashboard shell (first-run empty state)."""
+    return render(request, "core/dashboard.html")
+
+
+def terms(request):
+    """Terms of service page."""
+    return render(request, "core/terms.html")
+
+
+def privacy(request):
+    """Privacy policy page."""
+    return render(request, "core/privacy.html")
+{%- endif %}
 

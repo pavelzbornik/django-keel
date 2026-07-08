@@ -1,0 +1,19 @@
+{% raw %}{% load i18n account %}
+{% if confirmation %}
+    {% user_display confirmation.email_address.user as user_display %}
+    <p class="text-sm text-base-content/70">
+        {% blocktrans with confirmation.email_address.email as email %}Please confirm that <a class="link link-primary" href="mailto:{{ email }}">{{ email }}</a> is an email address for user {{ user_display }}.{% endblocktrans %}
+    </p>
+    <form method="post" action="{% url 'account_confirm_email' confirmation.key %}" class="mt-4">
+        {% csrf_token %}
+        {% if redirect_field_value %}
+        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+        {% endif %}
+        <button type="submit" class="btn btn-primary">{% trans "Confirm" %}</button>
+    </form>
+{% else %}
+    <p class="text-sm text-base-content/70">
+        {% url 'account_email' as email_url %}
+        {% blocktrans %}This email confirmation link expired or is invalid. Please <a class="link link-primary" href="{{ email_url }}">issue a new email confirmation request</a>.{% endblocktrans %}
+    </p>
+{% endif %}{% endraw %}

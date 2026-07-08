@@ -1,0 +1,65 @@
+{% raw %}{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Email addresses" %} — {% endraw %}{{ project_name }}{% raw %}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <h1 class="text-2xl font-bold text-base-content">{% trans "Email addresses" %}</h1>
+
+    {% if emailaddresses %}
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                <p class="text-sm text-base-content/70">{% trans "The following email addresses are associated with your account:" %}</p>
+                <div class="space-y-2">
+                    {% for emailaddress in emailaddresses %}
+                    <label class="flex items-center justify-between rounded-lg border border-base-300 px-3 py-2 text-sm">
+                        <span class="flex items-center gap-2">
+                            <input type="radio" name="email" value="{{ emailaddress.email }}" class="radio radio-sm" {% if emailaddress.primary %}checked{% endif %}>
+                            {{ emailaddress.email }}
+                        </span>
+                        <span class="flex gap-2 text-xs">
+                            {% if emailaddress.verified %}
+                            <span class="text-success">{% trans "Verified" %}</span>
+                            {% else %}
+                            <span class="text-warning">{% trans "Unverified" %}</span>
+                            {% endif %}
+                            {% if emailaddress.primary %}<span class="text-base-content/60">{% trans "Primary" %}</span>{% endif %}
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+                <div class="flex flex-wrap gap-2 pt-2">
+                    <button type="submit" name="action_primary" class="btn btn-primary btn-sm">{% trans "Make primary" %}</button>
+                    <button type="submit" name="action_send" class="btn btn-outline btn-sm">{% trans "Re-send verification" %}</button>
+                    <button type="submit" name="action_remove" class="btn btn-outline btn-sm">{% trans "Remove" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <p class="text-sm text-base-content/70">{% trans "You currently do not have any email address set up." %}</p>
+    {% endif %}
+
+    {% if can_add_email %}
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                <h2 class="card-title">{% trans "Add email address" %}</h2>
+                {% for field in form %}
+                <div>
+                    <label class="label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for err in field.errors %}<p class="mt-1 text-xs text-error">{{ err }}</p>{% endfor %}
+                </div>
+                {% endfor %}
+                <button type="submit" name="action_add" class="btn btn-primary btn-sm">{% trans "Add email" %}</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}{% endraw %}

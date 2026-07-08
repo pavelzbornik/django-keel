@@ -1,0 +1,73 @@
+"""Tests for the account settings + GDPR self-service views."""
+import json
+
+import pytest
+
+
+@pytest.mark.django_db
+def test_settings_page_requires_login(client):
+    """Test that anonymous visitors are redirected away from settings."""
+    response = client.get("/account/settings/")
+
+    assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_settings_page_renders_for_authenticated_user(client, user):
+    """Test that a signed-in user can view their settings page."""
+    client.force_login(user)
+    response = client.get("/account/settings/")
+
+    assert response.status_code == 200
+    assert user.email.encode() in response.content
+
+
+@pytest.mark.django_db
+def test_export_data_returns_json_attachment(client, user):
+    """Test that exporting data streams a JSON attachment (GDPR Art. 20)."""
+    client.force_login(user)
+    response = client.post("/account/settings/export/")
+
+    assert response.status_code == 200
+    assert response["Content-Type"] == "application/json"
+    assert "attachment" in response["Content-Disposition"]
+
+    payload = json.loads(b"".join(response.streaming_content))
+    assert payload["email"] == user.email
+
+
+@pytest.mark.django_db
+def test_delete_account_without_confirmation_is_a_no_op(client, user):
+    """Test that deleting without typing DELETE leaves the account untouched."""
+    client.force_login(user)
+    response = client.post("/account/settings/delete/", {"confirmation": "nope"})
+
+    assert response.status_code == 302
+    user.refresh_from_db()
+    assert user.is_active is True
+
+
+@pytest.mark.django_db
+def test_delete_account_with_confirmation_anonymizes_and_logs_out(client, user):
+    """Test that confirmed deletion anonymizes the account and signs out."""
+    client.force_login(user)
+    response = client.post("/account/settings/delete/", {"confirmation": "DELETE"})
+
+    assert response.status_code == 302
+    assert response.url == "/account/settings/deleted/"
+
+    user.refresh_from_db()
+    assert user.is_active is False
+    assert not user.has_usable_password()
+
+    # The session should no longer be authenticated.
+    response = client.get("/account/settings/")
+    assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_deleted_confirmation_page_returns_200(client):
+    """Test that the post-deletion confirmation page renders."""
+    response = client.get("/account/settings/deleted/")
+
+    assert response.status_code == 200

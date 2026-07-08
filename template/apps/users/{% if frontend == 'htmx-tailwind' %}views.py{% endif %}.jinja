@@ -1,0 +1,54 @@
+"""Account-settings and GDPR self-service views (plain Django, ADR-034 style).
+
+The settings page is a read view onto the account plus links into allauth's
+password/email management. Export and delete are POST-only, CSRF-protected
+actions that delegate to ``apps.users.services.gdpr``.
+"""
+import json
+
+from django.contrib import messages
+from django.contrib.auth import logout
+from django.contrib.auth.decorators import login_required
+from django.http import StreamingHttpResponse
+from django.shortcuts import redirect, render
+from django.utils.translation import gettext as _
+from django.views.decorators.http import require_POST
+
+from apps.users.services import gdpr
+
+_DELETE_CONFIRMATION = "DELETE"
+
+
+@login_required
+def account_settings(request):
+    """Render the account settings page for the signed-in user."""
+    return render(request, "account/settings.html")
+
+
+@login_required
+@require_POST
+def export_data(request):
+    """Stream the user's personal data as a JSON attachment (Art. 20)."""
+    payload = gdpr.export_data(request.user)
+    body = json.dumps(payload, indent=2, ensure_ascii=False)
+    response = StreamingHttpResponse((chunk for chunk in [body]), content_type="application/json")
+    response["Content-Disposition"] = 'attachment; filename="{{ project_slug }}-account-data.json"'
+    return response
+
+
+@login_required
+@require_POST
+def delete_account(request):
+    """Anonymize the account after type-to-confirm, then sign the user out."""
+    if request.POST.get("confirmation") != _DELETE_CONFIRMATION:
+        messages.error(request, _("Type DELETE to confirm — your account was not deleted."))
+        return redirect("account:settings")
+
+    gdpr.anonymize(request.user)
+    logout(request)
+    return redirect("account:deleted")
+
+
+def account_deleted(request):
+    """Post-deletion confirmation page (shown to the now-anonymous visitor)."""
+    return render(request, "account/deleted.html")
