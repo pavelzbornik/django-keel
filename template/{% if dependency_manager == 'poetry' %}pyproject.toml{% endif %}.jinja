@@ -95,6 +95,9 @@ django-parler = "^2.3.0"
 {% if frontend_bundling == 'vite' -%}
 django-vite = "^3.0.0"
 {% endif -%}
+{% if frontend == 'htmx-tailwind' -%}
+labbui = "^0.4.4"
+{% endif -%}
 django-extensions = "^3.2.0"
 python-dotenv = "^1.0.0"
 django-alive = "^1.3.0"

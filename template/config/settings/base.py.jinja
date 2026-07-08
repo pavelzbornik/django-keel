@@ -48,6 +48,10 @@ THIRD_PARTY_APPS = [
 {% if frontend == 'htmx-tailwind' and frontend_bundling == 'vite' -%}
     "django_vite",
 {% endif -%}
+{% if frontend == 'htmx-tailwind' -%}
+    "django_cotton",  # component templates
+    "labb",  # generic c-lb.* cotton primitives + lb_tags
+{% endif -%}
 {% if api_style in ['drf', 'both'] -%}
     "rest_framework",
     "drf_spectacular",
