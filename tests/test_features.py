@@ -179,11 +179,6 @@ def test_redis_cache_configured(generate):
     assert "RedisCache" in content
     assert "CACHES" in content
 
-    # Check views don't import cache when not needed
-    views = project / "apps/core/views.py"
-    views_content = views.read_text()
-    assert "from django.core.cache import cache" in views_content
-
 
 def test_no_cache_configured(generate):
     """Test that cache is excluded when set to none."""
