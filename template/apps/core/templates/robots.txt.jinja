@@ -1,0 +1,20 @@
+# {{ project_name }} - Robots.txt
+# Allow search engines to crawl public pages
+
+User-agent: *
+Allow: /
+
+# Disallow non-public routes
+Disallow: /admin/
+{% if auth_backend in ['allauth', 'both'] -%}
+Disallow: /accounts/
+{% endif -%}
+{% if api_style != 'none' -%}
+Disallow: /api/
+{% endif -%}
+
+# Sitemap location
+{% raw %}Sitemap: {{ request.scheme }}://{{ request.get_host }}/sitemap.xml{% endraw %}
+
+# Crawl-delay (be nice to servers)
+Crawl-delay: 1

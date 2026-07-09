@@ -1,0 +1,17 @@
+# Pending BDD specs (skeletons)
+
+`.feature` files here are **acceptance-spec skeletons for unbuilt features**, each
+tagged `@wip` and linked to its GitHub issue. They are deliberately **not bound** to
+step definitions (no `scenarios(...)` call in `tests/step_defs/`), so pytest-bdd does
+not collect them and CI stays green — an unbound scenario would otherwise raise
+`StepDefinitionNotFound`.
+
+Write scenarios in the project's `CONTEXT.md` ubiquitous language so they read the
+same whether a human or an agent implements them later.
+
+**When you implement one:** move its `.feature` up to `tests/features/`, add a
+`tests/step_defs/test_<name>.py` with `scenarios("../features/<name>.feature")` plus
+the step bindings, and drop the `@wip` tag.
+
+| Stub | Issue(s) |
+| ---- | -------- |

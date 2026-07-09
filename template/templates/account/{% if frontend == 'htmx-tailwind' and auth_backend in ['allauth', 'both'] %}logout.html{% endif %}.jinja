@@ -1,0 +1,23 @@
+{% raw %}{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Sign out" %} — {% endraw %}{{ project_name }}{% raw %}{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+            <h1 class="card-title">{% trans "Sign out" %}</h1>
+            <p class="text-sm text-base-content/70">{% trans "Are you sure you want to sign out?" %}</p>
+            <form method="post" action="{% url 'account_logout' %}" class="flex gap-2 mt-4">
+                {% csrf_token %}
+                {% if redirect_field_value %}
+                <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+                {% endif %}
+                <button type="submit" class="btn btn-primary">{% trans "Sign out" %}</button>
+                <a href="{% url 'index' %}" class="btn btn-outline">{% trans "Cancel" %}</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}{% endraw %}

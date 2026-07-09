@@ -1,0 +1,14 @@
+{% raw %}{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Account deleted" %} — {% endraw %}{{ project_name }}{% raw %}{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto text-center space-y-4 py-12">
+    <h1 class="text-2xl font-bold text-base-content">{% trans "Your account has been deleted" %}</h1>
+    <p class="text-sm text-base-content/70">
+        {% trans "Your personal data has been anonymized. You have been signed out." %}
+    </p>
+    <a href="{% url 'index' %}" class="btn btn-sm btn-primary">{% trans "Back to home" %}</a>
+</div>
+{% endblock %}{% endraw %}

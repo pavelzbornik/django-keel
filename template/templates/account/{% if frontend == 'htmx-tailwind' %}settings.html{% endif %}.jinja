@@ -1,0 +1,78 @@
+{% raw %}{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Account settings" %} — {% endraw %}{{ project_name }}{% raw %}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-8">
+    <h1 class="text-2xl font-bold text-base-content">{% trans "Account settings" %}</h1>
+
+    <!-- Profile -->
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title">{% trans "Profile" %}</h2>
+            <dl class="mt-2 grid grid-cols-1 gap-2 text-sm sm:grid-cols-[8rem_1fr]">
+                <dt class="text-base-content/60">{% trans "Name" %}</dt>
+                <dd>{{ user.get_full_name|default:"—" }}</dd>
+                <dt class="text-base-content/60">{% trans "Email" %}</dt>
+                <dd>{{ user.email }}</dd>
+                <dt class="text-base-content/60">{% trans "Joined" %}</dt>
+                <dd>{{ user.date_joined|date:"j M Y" }}</dd>
+            </dl>
+            {% endraw %}{% if auth_backend in ['allauth', 'both'] %}{% raw %}
+            <div class="mt-4 flex flex-wrap gap-2">
+                <a href="{% url 'account_change_password' %}" class="btn btn-sm btn-outline">
+                    {% trans "Change password" %}
+                </a>
+                <a href="{% url 'account_email' %}" class="btn btn-sm btn-outline">
+                    {% trans "Manage email addresses" %}
+                </a>
+            </div>
+            {% endraw %}{% endif %}{% raw %}
+        </div>
+    </div>
+
+    <!-- Privacy: export + delete (GDPR self-service) -->
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body space-y-6">
+            <div>
+                <h2 class="card-title">{% trans "Privacy" %}</h2>
+                <p class="mt-1 text-sm text-base-content/60">
+                    {% trans "Download everything we hold about you, or permanently delete your account." %}
+                </p>
+            </div>
+
+            <form method="post" action="{% url 'account:export' %}">
+                {% csrf_token %}
+                <p class="text-sm text-base-content/80">
+                    {% trans "Export your account data as a JSON file." %}
+                </p>
+                <button type="submit" class="btn btn-sm btn-primary mt-3">
+                    {% trans "Download my data" %}
+                </button>
+            </form>
+
+            <div class="border-t border-base-300 pt-6">
+                <h3 class="font-semibold text-error">{% trans "Delete account" %}</h3>
+                <p class="mt-1 text-sm text-base-content/80">
+                    {% trans "This permanently anonymizes your account. This cannot be undone." %}
+                </p>
+                <form method="post" action="{% url 'account:delete' %}" class="mt-4 space-y-3">
+                    {% csrf_token %}
+                    <label class="block text-sm text-base-content/70" for="confirmation">
+                        {% trans "Type DELETE to confirm." %}
+                    </label>
+                    <input type="text" id="confirmation" name="confirmation" autocomplete="off"
+                           class="input input-bordered input-sm w-40"
+                           placeholder="DELETE">
+                    <div>
+                        <button type="submit" class="btn btn-sm btn-error">
+                            {% trans "Delete my account" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}{% endraw %}

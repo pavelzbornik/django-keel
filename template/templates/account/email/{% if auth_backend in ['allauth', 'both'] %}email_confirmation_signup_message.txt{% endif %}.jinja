@@ -1,0 +1,9 @@
+{% raw %}{% extends "account/email/base_message.txt" %}
+{% load i18n %}
+
+{% block content %}{% autoescape off %}{% blocktrans %}Welcome to {% endraw %}{{ project_name }}{% raw %}. Confirm your email address to get started.{% endblocktrans %}
+
+{% trans "Confirm your email:" %}
+{{ activate_url }}
+
+{% trans "If you didn't create this account, you can safely ignore this email." %}{% endautoescape %}{% endblock content %}{% endraw %}

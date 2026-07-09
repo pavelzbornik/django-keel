@@ -1,0 +1,20 @@
+{% raw %}{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Verify your email" %} — {% endraw %}{{ project_name }}{% raw %}{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+            <h1 class="card-title">{% trans "Verify your email address" %}</h1>
+            <p class="text-sm text-base-content/70">
+                {% trans "We have sent an email to you for verification. Follow the link provided to finalize the signup process. If you do not see the verification email in your main inbox, check your spam folder. Please contact us if you do not receive the verification email within a few minutes." %}
+            </p>
+            <p class="text-sm text-base-content/70 mt-4">
+                <a class="link link-primary" href="{% url 'account_login' %}">{% trans "Back to sign in" %}</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}{% endraw %}

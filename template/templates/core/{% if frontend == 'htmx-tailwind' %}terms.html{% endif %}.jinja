@@ -1,0 +1,27 @@
+{% raw %}{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Terms of Service" %} — {% endraw %}{{ project_name }}{% raw %}{% endblock %}
+
+{% block content %}
+<article class="max-w-2xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+    <h1 class="text-3xl font-bold text-base-content">{% trans "Terms of Service" %}</h1>
+    <!-- TODO: this is a scaffold, not legal advice — replace every section below
+         with your project's actual terms before shipping to production. -->
+    <p class="mt-2 text-sm text-base-content/60">{% trans "Last updated: TODO" %}</p>
+
+    <div class="mt-6 space-y-4 text-sm text-base-content/80">
+        <h2 class="text-lg font-semibold text-base-content pt-2">{% trans "The service" %}</h2>
+        <p>{% trans "TODO: describe what the service does, and any availability or warranty disclaimers." %}</p>
+
+        <h2 class="text-lg font-semibold text-base-content pt-2">{% trans "Your content" %}</h2>
+        <p>{% trans "TODO: describe ownership of user-submitted content and the license granted to run the service." %}</p>
+
+        <h2 class="text-lg font-semibold text-base-content pt-2">{% trans "Changes" %}</h2>
+        <p>{% trans "TODO: describe how and when these terms may change, and how users are notified." %}</p>
+
+        <h2 class="text-lg font-semibold text-base-content pt-2">{% trans "Contact" %}</h2>
+        <p>{% trans "TODO: provide a contact address for questions about these terms." %}</p>
+    </div>
+</article>
+{% endblock %}{% endraw %}

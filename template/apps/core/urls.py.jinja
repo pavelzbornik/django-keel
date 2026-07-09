@@ -3,11 +3,15 @@ from django.urls import path
 
 from . import views
 
-# No app_name so URLs are accessible without namespace
-# (e.g., reverse("health-check") instead of reverse("core:health-check"))
+# No app_name so URLs are accessible without namespace.
+# Health endpoints live under /health/ via django-alive (see config/urls.py) —
+# T3: the core app no longer ships a duplicate health mechanism.
 
 urlpatterns = [
     path("", views.index, name="index"),
-    path("health/", views.health_check, name="health-check"),
-    path("ready/", views.readiness_check, name="readiness-check"),
+{%- if frontend == 'htmx-tailwind' %}
+    path("dashboard/", views.dashboard, name="dashboard"),
+    path("terms/", views.terms, name="terms"),
+    path("privacy/", views.privacy, name="privacy"),
+{%- endif %}
 ]

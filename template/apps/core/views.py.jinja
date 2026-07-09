@@ -1,10 +1,12 @@
 """Core views."""
 from django.conf import settings
-from django.db import connection
-from django.http import JsonResponse{% if frontend == 'htmx-tailwind' %}, HttpResponse
+{%- if frontend == 'htmx-tailwind' %}
+from django.contrib.auth.decorators import login_required
+{%- endif %}
+from django.http import HttpResponse, JsonResponse{% if frontend == 'htmx-tailwind' %}
 from django.shortcuts import render{% endif %}
-{% if cache == 'redis' %}
-from django.core.cache import cache{% endif %}
+from django.template.loader import render_to_string
+from django.utils import timezone
 
 
 def index(request):
@@ -21,33 +23,60 @@ def index(request):
 {%- endif %}
 
 
-def health_check(request):
-    """Health check endpoint."""
-    return JsonResponse({"status": "healthy"})
+def robots_txt(request):
+    """Serve robots.txt for search engine crawlers.
+
+    Guides search engines on what to crawl and where to find the sitemap.
+    """
+    content = render_to_string("robots.txt", {"request": request})
+    return HttpResponse(content, content_type="text/plain")
 
 
-def readiness_check(request):
-    """Readiness check with database and cache verification."""
-    checks = {"database": False{% if cache == 'redis' %}, "cache": False{% endif %}}
+def sitemap(request):
+    """Generate sitemap.xml listing the public landing page."""
+    last_mod = timezone.now().strftime("%Y-%m-%d")
 
-    try:
-        # Check database
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT 1")
-        checks["database"] = True
-    except Exception:
-        pass
-{% if cache == 'redis' %}
+{%- if use_i18n %}
+    paths = [f"/{code}/" for code, _name in settings.LANGUAGES]
+{%- else %}
+    paths = ["/"]
+{%- endif %}
 
-    try:
-        # Check cache
-        cache.set("health_check", "ok", 10)
-        checks["cache"] = cache.get("health_check") == "ok"
-    except Exception:
-        pass
-{% endif %}
+    xml_content = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ]
 
-    all_ready = all(checks.values())
-    status_code = 200 if all_ready else 503
+    for path in paths:
+        url = request.build_absolute_uri(path)
+        xml_content.append("  <url>")
+        xml_content.append(f"    <loc>{url}</loc>")
+        xml_content.append(f"    <lastmod>{last_mod}</lastmod>")
+        xml_content.append("    <changefreq>weekly</changefreq>")
+        xml_content.append("    <priority>1.0</priority>")
+        xml_content.append("  </url>")
 
-    return JsonResponse({"ready": all_ready, "checks": checks}, status=status_code)
+    xml_content.append("</urlset>")
+
+    return HttpResponse("\n".join(xml_content), content_type="application/xml")
+
+
+{%- if frontend == 'htmx-tailwind' %}
+
+
+@login_required
+def dashboard(request):
+    """Authenticated dashboard shell (first-run empty state)."""
+    return render(request, "core/dashboard.html")
+
+
+def terms(request):
+    """Terms of service page."""
+    return render(request, "core/terms.html")
+
+
+def privacy(request):
+    """Privacy policy page."""
+    return render(request, "core/privacy.html")
+{%- endif %}
+

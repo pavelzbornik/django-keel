@@ -1,0 +1,72 @@
+{% raw %}{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Page Not Found" %} — {% endraw %}{{ project_name }}{% raw %}{% endblock %}
+
+{% block content %}{% endraw %}
+<div class="min-h-[70vh] flex items-center justify-center px-4 py-16">
+    <div class="max-w-2xl w-full text-center">
+        <!-- 404 Icon -->
+        <div class="inline-flex items-center justify-center size-24 rounded-full bg-primary/15 mb-8">
+            <!-- lucide: search-x -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="text-primary">
+                <path d="m13.5 8.5-5 5"/>
+                <path d="m8.5 8.5 5 5"/>
+                <circle cx="10" cy="10" r="7"/>
+                <path d="m21 21-4.3-4.3"/>
+            </svg>
+        </div>
+
+        <!-- Error Message -->
+        <h1 class="text-6xl font-bold text-base-content mb-4">404</h1>
+        <h2 class="text-3xl font-semibold text-base-content mb-4">
+            {% raw %}{% trans "Page Not Found" %}{% endraw %}
+        </h2>
+        <p class="text-lg text-base-content/70 mb-8">
+            {% raw %}{% trans "The page you are looking for does not exist or has moved." %}{% endraw %}
+        </p>
+
+        <!-- Help Section -->
+        <div class="bg-base-200 border border-base-300 rounded-lg p-6 mb-8 text-left">
+            <h3 class="text-lg font-semibold text-base-content mb-3">
+                {% raw %}{% trans "What can you do?" %}{% endraw %}
+            </h3>
+            <ul class="space-y-2 text-base-content">
+                <li class="flex items-start">
+                    <!-- lucide: check-circle -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="text-primary mr-2 mt-0.5 shrink-0">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="m9 12 2 2 4-4"/>
+                    </svg>
+                    <span>{% raw %}{% trans "Check the URL for typos" %}{% endraw %}</span>
+                </li>
+                <li class="flex items-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="text-primary mr-2 mt-0.5 shrink-0">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="m9 12 2 2 4-4"/>
+                    </svg>
+                    <span>{% raw %}{% trans "Go back to the homepage and start over" %}{% endraw %}</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{% raw %}{% url 'index' %}{% endraw %}" class="btn btn-primary btn-lg gap-2">
+                <!-- lucide: home -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                {% raw %}{% trans "Back to Homepage" %}{% endraw %}
+            </a>
+            <a href="javascript:history.back()" class="btn btn-outline btn-lg gap-2">
+                <!-- lucide: arrow-left -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                {% raw %}{% trans "Go Back" %}{% endraw %}
+            </a>
+        </div>
+    </div>
+</div>
+{% raw %}{% endblock %}{% endraw %}

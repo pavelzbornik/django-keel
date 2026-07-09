@@ -1,0 +1,60 @@
+"""Tests for the GDPR data-subject service (export/anonymize)."""
+import pytest
+
+from apps.users.services import gdpr
+
+
+@pytest.mark.django_db
+def test_export_data_contains_expected_keys(user):
+    """Test that export_data returns the documented profile fields."""
+    data = gdpr.export_data(user)
+
+    assert set(data) == {
+        "id",
+        "email",
+        "first_name",
+        "last_name",
+        "date_joined",
+        "last_login",
+    }
+
+
+@pytest.mark.django_db
+def test_export_data_values_match_user(user):
+    """Test that export_data reflects the user's actual field values."""
+    data = gdpr.export_data(user)
+
+    assert data["id"] == user.pk
+    assert data["email"] == user.email
+    assert data["first_name"] == user.first_name
+    assert data["last_name"] == user.last_name
+    assert data["date_joined"] == user.date_joined.isoformat()
+    assert data["last_login"] is None
+
+
+@pytest.mark.django_db
+def test_anonymize_scrubs_pii_field_by_field(user):
+    """Test that anonymize scrubs each PII field on the account."""
+    pk = user.pk
+
+    gdpr.anonymize(user)
+    user.refresh_from_db()
+
+    assert user.email == f"deleted-{pk}@anonymized.invalid"
+    assert user.first_name == ""
+    assert user.last_name == ""
+    assert user.is_active is False
+    assert not user.has_usable_password()
+
+
+@pytest.mark.django_db
+def test_anonymize_is_idempotent(user):
+    """Test that calling anonymize twice is safe and stable."""
+    gdpr.anonymize(user)
+    first_email = type(user).objects.get(pk=user.pk).email
+
+    gdpr.anonymize(user)
+    user.refresh_from_db()
+
+    assert user.email == first_email
+    assert user.is_active is False

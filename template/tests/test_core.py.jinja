@@ -7,33 +7,20 @@ from django.urls import reverse
 
 
 @pytest.mark.django_db
-def test_health_check_endpoint(client):
-    """Test that health check endpoint returns healthy status."""
-    response = client.get(reverse("health-check"))
+def test_liveness_endpoint(client):
+    """django-alive liveness: process is up (T3: the single health mechanism)."""
+    response = client.get("/health/alive/")
 
     assert response.status_code == 200
-    data = response.json()
-    assert data["status"] == "healthy"
 
 
 @pytest.mark.django_db
-def test_readiness_check_endpoint(client):
-    """Test that readiness check endpoint works."""
-    response = client.get(reverse("readiness-check"))
+def test_healthcheck_endpoint(client):
+    """django-alive healthcheck runs the configured checks (DB et al.)."""
+    response = client.get("/health/health/")
 
-    # May return 200 or 503 depending on database/cache availability
+    # 200 when all checks pass, 503 when a dependency is down
     assert response.status_code in [200, 503]
-    data = response.json()
-    assert "ready" in data
-    assert "checks" in data
-
-
-@pytest.mark.django_db
-def test_health_check_has_correct_content_type(client):
-    """Test that health check returns JSON content type."""
-    response = client.get(reverse("health-check"))
-
-    assert response["Content-Type"] == "application/json"
 
 
 # URL Resolution Tests
@@ -42,12 +29,7 @@ def test_health_check_has_correct_content_type(client):
 @pytest.mark.django_db
 def test_core_urls_resolve():
     """Test that core URLs can be resolved."""
-    # Health check should resolve
-    url = reverse("health-check")
-    assert url is not None
-
-    # Readiness check should resolve
-    url = reverse("readiness-check")
+    url = reverse("index")
     assert url is not None
 
 
@@ -93,6 +75,48 @@ def test_template_context_processors_work(client):
     context = request(test_request)
 
     assert "request" in context or context is not None
+
+
+# Legal Page Tests
+
+
+@pytest.mark.django_db
+def test_terms_page_returns_200(client):
+    """Test that the terms of service page renders."""
+    response = client.get("/terms/")
+
+    assert response.status_code == 200
+    assert "text/html" in response["Content-Type"]
+
+
+@pytest.mark.django_db
+def test_privacy_page_returns_200(client):
+    """Test that the privacy policy page renders."""
+    response = client.get("/privacy/")
+
+    assert response.status_code == 200
+    assert "text/html" in response["Content-Type"]
+
+
+# Dashboard Tests
+
+
+@pytest.mark.django_db
+def test_dashboard_requires_login(client):
+    """Test that the dashboard redirects anonymous visitors to login."""
+    response = client.get("/dashboard/")
+
+    assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_dashboard_shows_empty_state_for_authenticated_user(client, user):
+    """Test that a signed-in user sees the first-run empty state."""
+    client.force_login(user)
+    response = client.get("/dashboard/")
+
+    assert response.status_code == 200
+    assert b"Start building" in response.content
 {% endif -%}
 
 
@@ -307,3 +331,52 @@ def test_500_error_handling():
 
     # In production, custom error handlers should be configured
     assert hasattr(settings, "DEBUG")
+
+
+{% if frontend == 'htmx-tailwind' -%}
+@pytest.mark.django_db
+def test_404_renders_custom_template(client):
+    """Test that a missing page renders the themed 404.html."""
+    response = client.get("/nonexistent-page-that-does-not-exist/")
+
+    assert response.status_code == 404
+    assert b"Page Not Found" in response.content
+
+
+@pytest.mark.django_db
+def test_500_template_renders():
+    """The 500 handler renders without a request in context (Django's
+    default server_error view calls template.render() with no context)."""
+    from django.template.loader import render_to_string
+
+    content = render_to_string("500.html")
+
+    assert "Server Error" in content
+{% endif -%}
+
+
+# SEO Surface Tests
+
+
+@pytest.mark.django_db
+def test_robots_txt_returns_200_with_sitemap_line(client):
+    """Test that robots.txt is served with a Sitemap directive."""
+    response = client.get("/robots.txt")
+
+    assert response.status_code == 200
+    assert response["Content-Type"] == "text/plain"
+    assert b"Sitemap:" in response.content
+    assert b"/sitemap.xml" in response.content
+
+
+@pytest.mark.django_db
+def test_sitemap_returns_200_valid_xml(client):
+    """Test that sitemap.xml is served as valid XML listing the index page."""
+    response = client.get("/sitemap.xml")
+
+    assert response.status_code == 200
+    assert response["Content-Type"] == "application/xml"
+    content = response.content.decode("utf-8")
+    assert '<?xml version="1.0" encoding="UTF-8"?>' in content
+    assert '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' in content
+    assert "</urlset>" in content
