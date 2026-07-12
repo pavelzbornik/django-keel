@@ -71,3 +71,63 @@ def test_deleted_confirmation_page_returns_200(client):
     response = client.get("/account/settings/deleted/")
 
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_new_user_is_subscribed_by_default(user):
+    """Test that email notifications default to on (GDPR opt-out model)."""
+    assert user.email_notifications is True
+
+
+@pytest.mark.django_db
+def test_settings_page_shows_email_preferences_toggle(client, user):
+    """Test that the settings page exposes the unsubscribe toggle."""
+    client.force_login(user)
+    response = client.get("/account/settings/")
+
+    assert b"/account/settings/email-preferences/" in response.content
+    assert b"email_notifications" in response.content
+
+
+@pytest.mark.django_db
+def test_unchecked_preference_unsubscribes(client, user):
+    """Test that submitting without the checkbox unsubscribes the user."""
+    client.force_login(user)
+    response = client.post("/account/settings/email-preferences/", {})
+
+    assert response.status_code == 302
+    assert response.url == "/account/settings/"
+    user.refresh_from_db()
+    assert user.email_notifications is False
+
+
+@pytest.mark.django_db
+def test_checked_preference_resubscribes(client, user):
+    """Test that submitting with the checkbox re-subscribes the user."""
+    user.email_notifications = False
+    user.save(update_fields=["email_notifications"])
+    client.force_login(user)
+    response = client.post(
+        "/account/settings/email-preferences/", {"email_notifications": "on"}
+    )
+
+    assert response.status_code == 302
+    user.refresh_from_db()
+    assert user.email_notifications is True
+
+
+@pytest.mark.django_db
+def test_email_preferences_requires_login(client):
+    """Test that anonymous visitors cannot change preferences."""
+    response = client.post("/account/settings/email-preferences/")
+
+    assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_email_preferences_is_post_only(client, user):
+    """Test that the preferences endpoint rejects GET."""
+    client.force_login(user)
+    response = client.get("/account/settings/email-preferences/")
+
+    assert response.status_code == 405

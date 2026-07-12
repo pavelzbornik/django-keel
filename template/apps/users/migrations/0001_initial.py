@@ -74,6 +74,14 @@ class Migration(migrations.Migration):
                     models.EmailField(max_length=254, unique=True, verbose_name="email address"),
                 ),
                 (
+                    "email_notifications",
+                    models.BooleanField(
+                        default=True,
+                        help_text="Receive product updates and non-essential emails. Uncheck to unsubscribe.",
+                        verbose_name="email notifications",
+                    ),
+                ),
+                (
                     "groups",
                     models.ManyToManyField(
                         blank=True,

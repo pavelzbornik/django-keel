@@ -36,6 +36,11 @@ class User(AbstractUser):
 
     username = None
     email = models.EmailField(_("email address"), unique=True)
+    email_notifications = models.BooleanField(
+        _("email notifications"),
+        default=True,
+        help_text=_("Receive product updates and non-essential emails. Uncheck to unsubscribe."),
+    )
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

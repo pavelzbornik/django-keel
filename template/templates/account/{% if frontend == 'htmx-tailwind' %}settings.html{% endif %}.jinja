@@ -32,6 +32,26 @@
         </div>
     </div>
 
+    <!-- Email notifications (GDPR unsubscribe) -->
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title">{% trans "Email notifications" %}</h2>
+            <form method="post" action="{% url 'account:email_preferences' %}" class="mt-2 space-y-4">
+                {% csrf_token %}
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" name="email_notifications" class="checkbox checkbox-primary mt-0.5"
+                           {% if user.email_notifications %}checked{% endif %}>
+                    <span class="text-sm text-base-content/80">
+                        {% trans "Receive product updates and other non-essential emails. Account emails are always sent." %}
+                    </span>
+                </label>
+                <button type="submit" class="btn btn-sm btn-primary">
+                    {% trans "Save preferences" %}
+                </button>
+            </form>
+        </div>
+    </div>
+
     <!-- Privacy: export + delete (GDPR self-service) -->
     <div class="card bg-base-100 shadow-sm">
         <div class="card-body space-y-6">

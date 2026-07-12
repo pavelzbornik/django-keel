@@ -14,7 +14,7 @@ from django.shortcuts import redirect, render
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
-from apps.users.services import gdpr
+from apps.users.services import gdpr, preferences
 
 _DELETE_CONFIRMATION = "DELETE"
 
@@ -34,6 +34,19 @@ def export_data(request):
     response = StreamingHttpResponse((chunk for chunk in [body]), content_type="application/json")
     response["Content-Disposition"] = 'attachment; filename="{{ project_slug }}-account-data.json"'
     return response
+
+
+@login_required
+@require_POST
+def email_preferences(request):
+    """Update the user's email-notification opt-in (GDPR unsubscribe)."""
+    enabled = "email_notifications" in request.POST
+    preferences.set_email_notifications(request.user, enabled=enabled)
+    if enabled:
+        messages.success(request, _("Your email preferences have been saved."))
+    else:
+        messages.success(request, _("You have been unsubscribed from non-essential emails."))
+    return redirect("account:settings")
 
 
 @login_required

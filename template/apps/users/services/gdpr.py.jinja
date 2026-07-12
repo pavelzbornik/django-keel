@@ -18,6 +18,7 @@ def export_data(user):
         "last_name": user.last_name,
         "date_joined": user.date_joined.isoformat(),
         "last_login": user.last_login.isoformat() if user.last_login else None,
+        "email_notifications": user.email_notifications,
         # TODO: merge in app-domain data owned by this user (e.g. serialize
         # related querysets here) as the project grows past the account itself.
     }
