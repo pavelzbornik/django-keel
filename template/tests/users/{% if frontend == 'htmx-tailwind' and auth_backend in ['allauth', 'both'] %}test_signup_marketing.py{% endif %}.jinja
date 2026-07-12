@@ -1,9 +1,13 @@
-"""Marketing consent in the registration flow — signup form, adapter, completion page."""
+"""Marketing consent in the registration flow — signup form, signal, adapter, completion."""
 import pytest
 from django.test import RequestFactory
 from django.urls import reverse
 
-from apps.users.adapter import AccountAdapter
+from apps.users.adapter import (
+    _PROMPT_FLAG,
+    AccountAdapter,
+    flag_social_signup_for_marketing_prompt,
+)
 from apps.users.forms import MarketingSignupForm
 
 
@@ -32,26 +36,55 @@ def test_signup_form_unchecked_still_marks_prompted(user):
 
 
 @pytest.mark.django_db
-def test_adapter_routes_unprompted_user_to_completion(user, rf):
-    """Test that a not-yet-prompted user is sent to the completion page."""
+def test_social_signup_signal_sets_session_flag(user, rf):
+    """Test that a social sign-up flags the session for the marketing prompt."""
     request = rf.get("/")
-    request.user = user
-    assert AccountAdapter().get_login_redirect_url(request) == reverse("account:complete_profile")
+    request.session = {}
+    flag_social_signup_for_marketing_prompt(request=request, user=user, sociallogin=object())
+    assert request.session[_PROMPT_FLAG] is True
 
 
 @pytest.mark.django_db
-def test_adapter_uses_normal_redirect_when_prompted(user, rf):
-    """Test that an already-prompted user follows the normal redirect."""
-    user.marketing_prompted = True
-    user.save(update_fields=["marketing_prompted"])
+def test_email_signup_signal_does_not_flag(user, rf):
+    """Test that an email sign-up does not flag the session (answered on the form)."""
+    request = rf.get("/")
+    request.session = {}
+    flag_social_signup_for_marketing_prompt(request=request, user=user, sociallogin=None)
+    assert _PROMPT_FLAG not in request.session
+
+
+@pytest.mark.django_db
+def test_adapter_routes_flagged_request_to_completion(user, rf):
+    """Test that a flagged session redirects once to the completion page."""
     request = rf.get("/")
     request.user = user
+    request.session = {_PROMPT_FLAG: True}
+    assert AccountAdapter().get_login_redirect_url(request) == reverse("account:complete_profile")
+    assert _PROMPT_FLAG not in request.session
+
+
+@pytest.mark.django_db
+def test_adapter_leaves_normal_login_untouched(user, rf):
+    """Test that an ordinary login is not redirected to the completion page."""
+    request = rf.get("/")
+    request.user = user
+    request.session = {}
     assert AccountAdapter().get_login_redirect_url(request) != reverse("account:complete_profile")
 
 
 @pytest.mark.django_db
 def test_complete_profile_requires_login(client):
     """Test that anonymous visitors cannot reach the completion page."""
+    response = client.get("/account/complete-profile/")
+    assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_complete_profile_skips_already_prompted_user(client, user):
+    """Test that an already-prompted user is redirected away from the completion page."""
+    user.marketing_prompted = True
+    user.save(update_fields=["marketing_prompted"])
+    client.force_login(user)
     response = client.get("/account/complete-profile/")
     assert response.status_code == 302
 
