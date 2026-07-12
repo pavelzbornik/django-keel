@@ -36,6 +36,19 @@ class User(AbstractUser):
 
     username = None
     email = models.EmailField(_("email address"), unique=True)
+    email_notifications = models.BooleanField(
+        _("product notification emails"),
+        default=True,
+        help_text=_("Emails about your account and activity, such as reminders and alerts."),
+    )
+    marketing_emails = models.BooleanField(
+        _("marketing emails"),
+        default=False,
+        help_text=_("Product news, tips, and promotional offers. Opt-in."),
+    )
+    # Whether we have asked the user for marketing consent yet (signup form, or the
+    # post-signup prompt for social logins). Drives the one-time completion redirect.
+    marketing_prompted = models.BooleanField(default=False, editable=False)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

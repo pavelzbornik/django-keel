@@ -32,6 +32,36 @@
         </div>
     </div>
 
+    <!-- Email preferences (GDPR) -->
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title">{% trans "Email preferences" %}</h2>
+            <p class="text-sm text-base-content/60">{% trans "Account emails are always sent." %}</p>
+            <form method="post" action="{% url 'account:email_preferences' %}" class="mt-2 space-y-4">
+                {% csrf_token %}
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" name="email_notifications" class="checkbox checkbox-primary mt-0.5"
+                           {% if user.email_notifications %}checked{% endif %}>
+                    <span class="text-sm text-base-content/80">
+                        <span class="font-medium text-base-content">{% trans "Product notifications" %}</span><br>
+                        {% trans "Emails about your account and activity, such as reminders and alerts." %}
+                    </span>
+                </label>
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" name="marketing_emails" class="checkbox checkbox-primary mt-0.5"
+                           {% if user.marketing_emails %}checked{% endif %}>
+                    <span class="text-sm text-base-content/80">
+                        <span class="font-medium text-base-content">{% trans "Marketing emails" %}</span><br>
+                        {% trans "Product news, tips, and promotional offers." %}
+                    </span>
+                </label>
+                <button type="submit" class="btn btn-sm btn-primary">
+                    {% trans "Save preferences" %}
+                </button>
+            </form>
+        </div>
+    </div>
+
     <!-- Privacy: export + delete (GDPR self-service) -->
     <div class="card bg-base-100 shadow-sm">
         <div class="card-body space-y-6">

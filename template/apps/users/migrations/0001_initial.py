@@ -74,6 +74,23 @@ class Migration(migrations.Migration):
                     models.EmailField(max_length=254, unique=True, verbose_name="email address"),
                 ),
                 (
+                    "email_notifications",
+                    models.BooleanField(
+                        default=True,
+                        help_text="Emails about your account and activity, such as reminders and alerts.",
+                        verbose_name="product notification emails",
+                    ),
+                ),
+                (
+                    "marketing_emails",
+                    models.BooleanField(
+                        default=False,
+                        help_text="Product news, tips, and promotional offers. Opt-in.",
+                        verbose_name="marketing emails",
+                    ),
+                ),
+                ("marketing_prompted", models.BooleanField(default=False, editable=False)),
+                (
                     "groups",
                     models.ManyToManyField(
                         blank=True,

@@ -14,7 +14,7 @@ from django.shortcuts import redirect, render
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
-from apps.users.services import gdpr
+from apps.users.services import gdpr, preferences
 
 _DELETE_CONFIRMATION = "DELETE"
 
@@ -38,6 +38,19 @@ def export_data(request):
 
 @login_required
 @require_POST
+def email_preferences(request):
+    """Update the user's product-notification and marketing email opt-ins (GDPR)."""
+    preferences.update_email_preferences(
+        request.user,
+        email_notifications="email_notifications" in request.POST,
+        marketing_emails="marketing_emails" in request.POST,
+    )
+    messages.success(request, _("Your email preferences have been saved."))
+    return redirect("account:settings")
+
+
+@login_required
+@require_POST
 def delete_account(request):
     """Anonymize the account after type-to-confirm, then sign the user out."""
     if request.POST.get("confirmation") != _DELETE_CONFIRMATION:
@@ -52,3 +65,20 @@ def delete_account(request):
 def account_deleted(request):
     """Post-deletion confirmation page (shown to the now-anonymous visitor)."""
     return render(request, "account/deleted.html")
+{% if auth_backend in ['allauth', 'both'] %}
+
+@login_required
+def complete_profile(request):
+    """Ask a new (typically social) user for marketing consent not inherited.
+
+    Shown once after sign-up via the login redirect; submitting records the
+    choice and marks the user prompted so they are not asked again.
+    """
+    if request.method == "POST":
+        preferences.record_marketing_consent(
+            request.user,
+            marketing_emails="marketing_emails" in request.POST,
+        )
+        return redirect("dashboard")
+    return render(request, "account/complete_profile.html")
+{% endif %}

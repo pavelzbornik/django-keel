@@ -1,0 +1,21 @@
+"""Email preferences (ADR-034 style).
+
+GDPR requires a self-service way to control email. Two independent opt-ins:
+``email_notifications`` gates product/account notifications (default on, opt-out);
+``marketing_emails`` gates marketing/promotional email (default off, opt-in).
+Gate any non-essential send on the matching flag (or filter the queryset).
+"""
+
+
+def update_email_preferences(user, *, email_notifications, marketing_emails):
+    """Persist the user's product-notification and marketing email opt-ins."""
+    user.email_notifications = email_notifications
+    user.marketing_emails = marketing_emails
+    user.save(update_fields=["email_notifications", "marketing_emails"])
+
+
+def record_marketing_consent(user, *, marketing_emails):
+    """Record the post-signup marketing choice and mark the user as prompted."""
+    user.marketing_emails = marketing_emails
+    user.marketing_prompted = True
+    user.save(update_fields=["marketing_emails", "marketing_prompted"])

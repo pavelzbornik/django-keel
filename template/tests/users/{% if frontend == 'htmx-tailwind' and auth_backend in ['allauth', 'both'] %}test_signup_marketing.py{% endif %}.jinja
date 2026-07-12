@@ -1,0 +1,68 @@
+"""Marketing consent in the registration flow — signup form, adapter, completion page."""
+import pytest
+from django.test import RequestFactory
+from django.urls import reverse
+
+from apps.users.adapter import AccountAdapter
+from apps.users.forms import MarketingSignupForm
+
+
+@pytest.mark.django_db
+def test_signup_form_records_consent(user):
+    """Test that the signup form records the opt-in and marks the user prompted."""
+    form = MarketingSignupForm({"marketing_emails": "on"})
+    assert form.is_valid()
+    form.signup(RequestFactory().get("/"), user)
+
+    user.refresh_from_db()
+    assert user.marketing_emails is True
+    assert user.marketing_prompted is True
+
+
+@pytest.mark.django_db
+def test_signup_form_unchecked_still_marks_prompted(user):
+    """Test that declining marketing still marks the user as prompted."""
+    form = MarketingSignupForm({})
+    assert form.is_valid()
+    form.signup(RequestFactory().get("/"), user)
+
+    user.refresh_from_db()
+    assert user.marketing_emails is False
+    assert user.marketing_prompted is True
+
+
+@pytest.mark.django_db
+def test_adapter_routes_unprompted_user_to_completion(user, rf):
+    """Test that a not-yet-prompted user is sent to the completion page."""
+    request = rf.get("/")
+    request.user = user
+    assert AccountAdapter().get_login_redirect_url(request) == reverse("account:complete_profile")
+
+
+@pytest.mark.django_db
+def test_adapter_uses_normal_redirect_when_prompted(user, rf):
+    """Test that an already-prompted user follows the normal redirect."""
+    user.marketing_prompted = True
+    user.save(update_fields=["marketing_prompted"])
+    request = rf.get("/")
+    request.user = user
+    assert AccountAdapter().get_login_redirect_url(request) != reverse("account:complete_profile")
+
+
+@pytest.mark.django_db
+def test_complete_profile_requires_login(client):
+    """Test that anonymous visitors cannot reach the completion page."""
+    response = client.get("/account/complete-profile/")
+    assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_complete_profile_post_records_consent(client, user):
+    """Test that submitting the completion form records consent and marks prompted."""
+    client.force_login(user)
+    response = client.post("/account/complete-profile/", {"marketing_emails": "on"})
+
+    assert response.status_code == 302
+    user.refresh_from_db()
+    assert user.marketing_emails is True
+    assert user.marketing_prompted is True

@@ -305,6 +305,12 @@ ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+{% if frontend == 'htmx-tailwind' -%}
+# Capture marketing consent at signup (email form) and route not-yet-prompted
+# users (social one-click sign-ups) to the completion page (GDPR, ADR-034).
+ACCOUNT_SIGNUP_FORM_CLASS = "apps.users.forms.MarketingSignupForm"
+ACCOUNT_ADAPTER = "apps.users.adapter.AccountAdapter"
+{% endif -%}
 {% endif %}
 
 {% if frontend == 'htmx-tailwind' -%}

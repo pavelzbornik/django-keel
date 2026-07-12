@@ -7,7 +7,11 @@ app_name = "account"
 
 urlpatterns = [
     path("settings/", views.account_settings, name="settings"),
+    path("settings/email-preferences/", views.email_preferences, name="email_preferences"),
     path("settings/export/", views.export_data, name="export"),
     path("settings/delete/", views.delete_account, name="delete"),
     path("settings/deleted/", views.account_deleted, name="deleted"),
+{%- if auth_backend in ['allauth', 'both'] %}
+    path("complete-profile/", views.complete_profile, name="complete_profile"),
+{%- endif %}
 ]
