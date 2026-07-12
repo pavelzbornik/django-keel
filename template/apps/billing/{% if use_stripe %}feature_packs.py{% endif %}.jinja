@@ -1,0 +1,97 @@
+"""Progressive feature-pack entitlements (ADR-068).
+
+A cumulative ladder of packs plus opt-in add-ons resolves to the set of feature
+keys a subscriber is entitled to, independently of Stripe. Each app declares its
+own ladder (its ``PACKS``); this module is the reusable resolver the billing gate
+uses, so every feature check goes through one code path instead of each app
+re-deriving entitlements over dj-stripe.
+
+Wiring (per app):
+    1. Declare a ladder once, low-to-high::
+
+        LADDER = FeaturePackLadder(
+            packs=[
+                Pack("free", "Free", frozenset({"spend"})),
+                Pack("kitchen", "Kitchen", frozenset({"pantry", "shopping_list"})),
+                Pack("planner", "Planner", frozenset({"meals", "deals"})),
+            ],
+            add_ons=[AddOn("ai_nutrition", "AI Nutrition", frozenset({"photo_log"}))],
+        )
+
+    2. Map the user's active subscription to a pack slug (+ add-on slugs) using
+       the existing plan detection, then::
+
+        entitled = LADDER.features_for(pack_slug, add_on_slugs)
+
+    3. Gate on membership — feed ``entitled`` to templates for nav, and use the
+       existing ``feature_required`` decorator (``billing.decorators``) for views.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Iterable
+from dataclasses import dataclass, field
+
+
+@dataclass(frozen=True)
+class Pack:
+    """One rung of the progressive ladder.
+
+    ``features`` are the keys this rung unlocks *on top of* the rungs below it;
+    resolution is cumulative, so a subscriber on this pack also gets every lower
+    pack's features.
+    """
+
+    slug: str
+    name: str
+    features: frozenset[str] = field(default_factory=frozenset)
+
+
+@dataclass(frozen=True)
+class AddOn:
+    """An opt-in extra unlocked independently of the pack ladder."""
+
+    slug: str
+    name: str
+    features: frozenset[str] = field(default_factory=frozenset)
+
+
+class FeaturePackLadder:
+    """Resolve a (pack, add-ons) pair to the set of entitled feature keys.
+
+    ``packs`` is ordered low-to-high; each pack includes every feature of the
+    packs before it (progressive / cumulative). ``add_ons`` are unlocked
+    independently. Unknown pack or add-on slugs resolve to no features rather
+    than raising, so a stale subscription never 500s the gate — it degrades to
+    the hide-or-redirect path.
+    """
+
+    def __init__(self, packs: Iterable[Pack], add_ons: Iterable[AddOn] = ()) -> None:
+        self._packs: list[Pack] = list(packs)
+        self._rung: dict[str, int] = {pack.slug: i for i, pack in enumerate(self._packs)}
+        self._add_ons: dict[str, AddOn] = {add_on.slug: add_on for add_on in add_ons}
+
+    def features_for(
+        self, pack_slug: str, add_on_slugs: Iterable[str] = ()
+    ) -> frozenset[str]:
+        """Every feature key entitled by ``pack_slug`` plus ``add_on_slugs``."""
+        entitled: set[str] = set()
+        rung = self._rung.get(pack_slug)
+        if rung is not None:
+            for pack in self._packs[: rung + 1]:
+                entitled |= pack.features
+        for slug in add_on_slugs:
+            add_on = self._add_ons.get(slug)
+            if add_on is not None:
+                entitled |= add_on.features
+        return frozenset(entitled)
+
+    def has_feature(
+        self, feature_key: str, pack_slug: str, add_on_slugs: Iterable[str] = ()
+    ) -> bool:
+        """Whether ``feature_key`` is entitled by ``pack_slug`` + ``add_on_slugs``."""
+        return feature_key in self.features_for(pack_slug, add_on_slugs)
+
+    def pack_slugs(self) -> list[str]:
+        """The ladder's pack slugs, low-to-high (for rendering the plan page)."""
+        return [pack.slug for pack in self._packs]
