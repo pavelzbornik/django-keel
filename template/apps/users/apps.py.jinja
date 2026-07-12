@@ -7,3 +7,9 @@ class UsersConfig(AppConfig):
 
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.users"
+{%- if frontend == 'htmx-tailwind' and auth_backend in ['allauth', 'both'] %}
+
+    def ready(self):
+        """Connect the sign-up signal receiver (marketing-consent prompt)."""
+        from apps.users import adapter  # noqa: F401  (registers user_signed_up receiver)
+{%- endif %}

@@ -1,20 +1,39 @@
-"""allauth account adapter (ADR-031/050 style).
+"""allauth account adapter + sign-up signal (ADR-031/050 style).
 
 Social sign-up is one-click (``SOCIALACCOUNT_AUTO_SIGNUP``), so marketing consent
-is never asked at the provider. After such a sign-up the user lands here with
-``marketing_prompted`` still false and is routed once to the completion page to
-collect the detail the provider does not supply. Email sign-ups answer on the
-form and are already prompted, so they fall through to the normal redirect.
+is never asked at the provider. The ``user_signed_up`` receiver flags a *social*
+sign-up in the session, and the adapter turns that one post-sign-up redirect into
+the completion page. Ordinary logins (and email sign-ups, which answer on the
+form) are left untouched, so they land on their normal destination.
 """
 from allauth.account.adapter import DefaultAccountAdapter
+from allauth.account.signals import user_signed_up
+from django.dispatch import receiver
 from django.urls import reverse
+
+_PROMPT_FLAG = "marketing_prompt_pending"
 
 
 class AccountAdapter(DefaultAccountAdapter):
-    """Route not-yet-prompted users to the marketing-consent completion page."""
+    """Route the one post-social-sign-up redirect to the marketing-consent page."""
+
+    def _with_prompt(self, request, default_url):
+        if request.session.pop(_PROMPT_FLAG, False):
+            return reverse("account:complete_profile")
+        return default_url
 
     def get_login_redirect_url(self, request):
-        user = request.user
-        if user.is_authenticated and not user.marketing_prompted:
-            return reverse("account:complete_profile")
-        return super().get_login_redirect_url(request)
+        return self._with_prompt(request, super().get_login_redirect_url(request))
+
+    def get_signup_redirect_url(self, request):
+        return self._with_prompt(request, super().get_signup_redirect_url(request))
+
+
+@receiver(user_signed_up)
+def flag_social_signup_for_marketing_prompt(request, user, sociallogin=None, **kwargs):
+    """Flag social sign-ups so the next redirect asks for marketing consent.
+
+    Email sign-ups (``sociallogin is None``) answer on the sign-up form.
+    """
+    if sociallogin is not None:
+        request.session[_PROMPT_FLAG] = True

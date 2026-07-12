@@ -80,5 +80,8 @@ def complete_profile(request):
             marketing_emails="marketing_emails" in request.POST,
         )
         return redirect("dashboard")
+    if request.user.marketing_prompted:
+        # Already answered (e.g. reached the URL directly) — nothing to ask.
+        return redirect("dashboard")
     return render(request, "account/complete_profile.html")
 {% endif %}
