@@ -1,13 +1,14 @@
-"""Email notification preferences (ADR-034 style).
+"""Email preferences (ADR-034 style).
 
-GDPR requires a self-service way to stop non-essential email. The
-``email_notifications`` flag gates product-update / marketing mail; transactional
-account email is unaffected. Gate any non-essential send on
-``user.email_notifications`` (or ``User.objects.filter(email_notifications=True)``).
+GDPR requires a self-service way to control email. Two independent opt-ins:
+``email_notifications`` gates product/account notifications (default on, opt-out);
+``marketing_emails`` gates marketing/promotional email (default off, opt-in).
+Gate any non-essential send on the matching flag (or filter the queryset).
 """
 
 
-def set_email_notifications(user, *, enabled):
-    """Persist the user's opt-in/out for non-essential notification email."""
-    user.email_notifications = enabled
-    user.save(update_fields=["email_notifications"])
+def update_email_preferences(user, *, email_notifications, marketing_emails):
+    """Persist the user's product-notification and marketing email opt-ins."""
+    user.email_notifications = email_notifications
+    user.marketing_emails = marketing_emails
+    user.save(update_fields=["email_notifications", "marketing_emails"])

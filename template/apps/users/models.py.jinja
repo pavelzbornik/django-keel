@@ -37,9 +37,14 @@ class User(AbstractUser):
     username = None
     email = models.EmailField(_("email address"), unique=True)
     email_notifications = models.BooleanField(
-        _("email notifications"),
+        _("product notification emails"),
         default=True,
-        help_text=_("Receive product updates and non-essential emails. Uncheck to unsubscribe."),
+        help_text=_("Emails about your account and activity, such as reminders and alerts."),
+    )
+    marketing_emails = models.BooleanField(
+        _("marketing emails"),
+        default=False,
+        help_text=_("Product news, tips, and promotional offers. Opt-in."),
     )
 
     USERNAME_FIELD = "email"

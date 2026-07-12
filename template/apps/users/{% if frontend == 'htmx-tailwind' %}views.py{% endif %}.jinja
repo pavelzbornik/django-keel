@@ -39,13 +39,13 @@ def export_data(request):
 @login_required
 @require_POST
 def email_preferences(request):
-    """Update the user's email-notification opt-in (GDPR unsubscribe)."""
-    enabled = "email_notifications" in request.POST
-    preferences.set_email_notifications(request.user, enabled=enabled)
-    if enabled:
-        messages.success(request, _("Your email preferences have been saved."))
-    else:
-        messages.success(request, _("You have been unsubscribed from non-essential emails."))
+    """Update the user's product-notification and marketing email opt-ins (GDPR)."""
+    preferences.update_email_preferences(
+        request.user,
+        email_notifications="email_notifications" in request.POST,
+        marketing_emails="marketing_emails" in request.POST,
+    )
+    messages.success(request, _("Your email preferences have been saved."))
     return redirect("account:settings")
 
 

@@ -77,8 +77,16 @@ class Migration(migrations.Migration):
                     "email_notifications",
                     models.BooleanField(
                         default=True,
-                        help_text="Receive product updates and non-essential emails. Uncheck to unsubscribe.",
-                        verbose_name="email notifications",
+                        help_text="Emails about your account and activity, such as reminders and alerts.",
+                        verbose_name="product notification emails",
+                    ),
+                ),
+                (
+                    "marketing_emails",
+                    models.BooleanField(
+                        default=False,
+                        help_text="Product news, tips, and promotional offers. Opt-in.",
+                        verbose_name="marketing emails",
                     ),
                 ),
                 (

@@ -74,24 +74,28 @@ def test_deleted_confirmation_page_returns_200(client):
 
 
 @pytest.mark.django_db
-def test_new_user_is_subscribed_by_default(user):
-    """Test that email notifications default to on (GDPR opt-out model)."""
+def test_preference_defaults(user):
+    """Test product notifications default on (opt-out) and marketing off (opt-in)."""
     assert user.email_notifications is True
+    assert user.marketing_emails is False
 
 
 @pytest.mark.django_db
-def test_settings_page_shows_email_preferences_toggle(client, user):
-    """Test that the settings page exposes the unsubscribe toggle."""
+def test_settings_page_shows_both_toggles(client, user):
+    """Test that the settings page exposes both preference toggles."""
     client.force_login(user)
     response = client.get("/account/settings/")
 
     assert b"/account/settings/email-preferences/" in response.content
     assert b"email_notifications" in response.content
+    assert b"marketing_emails" in response.content
 
 
 @pytest.mark.django_db
-def test_unchecked_preference_unsubscribes(client, user):
-    """Test that submitting without the checkbox unsubscribes the user."""
+def test_unchecked_preferences_unsubscribe_both(client, user):
+    """Test that submitting with no boxes ticked clears both opt-ins."""
+    user.marketing_emails = True
+    user.save(update_fields=["marketing_emails"])
     client.force_login(user)
     response = client.post("/account/settings/email-preferences/", {})
 
@@ -99,21 +103,38 @@ def test_unchecked_preference_unsubscribes(client, user):
     assert response.url == "/account/settings/"
     user.refresh_from_db()
     assert user.email_notifications is False
+    assert user.marketing_emails is False
 
 
 @pytest.mark.django_db
-def test_checked_preference_resubscribes(client, user):
-    """Test that submitting with the checkbox re-subscribes the user."""
+def test_checked_preferences_subscribe_both(client, user):
+    """Test that ticking both boxes sets both opt-ins."""
     user.email_notifications = False
     user.save(update_fields=["email_notifications"])
     client.force_login(user)
     response = client.post(
-        "/account/settings/email-preferences/", {"email_notifications": "on"}
+        "/account/settings/email-preferences/",
+        {"email_notifications": "on", "marketing_emails": "on"},
     )
 
     assert response.status_code == 302
     user.refresh_from_db()
     assert user.email_notifications is True
+    assert user.marketing_emails is True
+
+
+@pytest.mark.django_db
+def test_preference_flags_are_independent(client, user):
+    """Test that marketing can be enabled without product notifications."""
+    client.force_login(user)
+    response = client.post(
+        "/account/settings/email-preferences/", {"marketing_emails": "on"}
+    )
+
+    assert response.status_code == 302
+    user.refresh_from_db()
+    assert user.email_notifications is False
+    assert user.marketing_emails is True
 
 
 @pytest.mark.django_db
