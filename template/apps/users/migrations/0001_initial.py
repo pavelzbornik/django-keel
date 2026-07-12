@@ -89,6 +89,7 @@ class Migration(migrations.Migration):
                         verbose_name="marketing emails",
                     ),
                 ),
+                ("marketing_prompted", models.BooleanField(default=False, editable=False)),
                 (
                     "groups",
                     models.ManyToManyField(

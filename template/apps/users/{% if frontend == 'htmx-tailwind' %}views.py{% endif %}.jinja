@@ -65,3 +65,20 @@ def delete_account(request):
 def account_deleted(request):
     """Post-deletion confirmation page (shown to the now-anonymous visitor)."""
     return render(request, "account/deleted.html")
+{% if auth_backend in ['allauth', 'both'] %}
+
+@login_required
+def complete_profile(request):
+    """Ask a new (typically social) user for marketing consent not inherited.
+
+    Shown once after sign-up via the login redirect; submitting records the
+    choice and marks the user prompted so they are not asked again.
+    """
+    if request.method == "POST":
+        preferences.record_marketing_consent(
+            request.user,
+            marketing_emails="marketing_emails" in request.POST,
+        )
+        return redirect("dashboard")
+    return render(request, "account/complete_profile.html")
+{% endif %}

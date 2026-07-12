@@ -1,0 +1,23 @@
+"""allauth signup form extension (ADR-031/050 style).
+
+Adds an optional marketing-consent checkbox to the email signup form. allauth
+calls ``signup(request, user)`` after the account is created, letting us persist
+the choice and mark the user prompted so the completion redirect skips them.
+"""
+from django import forms
+from django.utils.translation import gettext_lazy as _
+
+
+class MarketingSignupForm(forms.Form):
+    """Extra signup field wired via ``ACCOUNT_SIGNUP_FORM_CLASS``."""
+
+    marketing_emails = forms.BooleanField(
+        required=False,
+        label=_("Send me product news, tips, and offers (optional)"),
+    )
+
+    def signup(self, request, user):
+        """Persist the marketing opt-in captured on the signup form."""
+        user.marketing_emails = self.cleaned_data["marketing_emails"]
+        user.marketing_prompted = True
+        user.save(update_fields=["marketing_emails", "marketing_prompted"])

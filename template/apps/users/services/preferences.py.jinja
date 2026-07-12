@@ -12,3 +12,10 @@ def update_email_preferences(user, *, email_notifications, marketing_emails):
     user.email_notifications = email_notifications
     user.marketing_emails = marketing_emails
     user.save(update_fields=["email_notifications", "marketing_emails"])
+
+
+def record_marketing_consent(user, *, marketing_emails):
+    """Record the post-signup marketing choice and mark the user as prompted."""
+    user.marketing_emails = marketing_emails
+    user.marketing_prompted = True
+    user.save(update_fields=["marketing_emails", "marketing_prompted"])

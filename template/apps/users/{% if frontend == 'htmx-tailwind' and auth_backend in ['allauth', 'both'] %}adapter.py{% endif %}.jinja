@@ -1,0 +1,20 @@
+"""allauth account adapter (ADR-031/050 style).
+
+Social sign-up is one-click (``SOCIALACCOUNT_AUTO_SIGNUP``), so marketing consent
+is never asked at the provider. After such a sign-up the user lands here with
+``marketing_prompted`` still false and is routed once to the completion page to
+collect the detail the provider does not supply. Email sign-ups answer on the
+form and are already prompted, so they fall through to the normal redirect.
+"""
+from allauth.account.adapter import DefaultAccountAdapter
+from django.urls import reverse
+
+
+class AccountAdapter(DefaultAccountAdapter):
+    """Route not-yet-prompted users to the marketing-consent completion page."""
+
+    def get_login_redirect_url(self, request):
+        user = request.user
+        if user.is_authenticated and not user.marketing_prompted:
+            return reverse("account:complete_profile")
+        return super().get_login_redirect_url(request)

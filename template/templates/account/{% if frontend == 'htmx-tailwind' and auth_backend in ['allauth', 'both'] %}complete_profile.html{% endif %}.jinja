@@ -1,0 +1,31 @@
+{% raw %}{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Finish setting up" %} — {% endraw %}{{ project_name }}{% raw %}{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold text-base-content">{% trans "One last thing" %}</h1>
+        <p class="mt-2 text-sm text-base-content/70">
+            {% trans "Your account is ready. May we send you occasional marketing emails? Account emails are always sent." %}
+        </p>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+            <form method="post" action="{% url 'account:complete_profile' %}" class="space-y-4">
+                {% csrf_token %}
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" name="marketing_emails" class="checkbox checkbox-primary mt-0.5">
+                    <span class="text-sm text-base-content/80">
+                        <span class="font-medium text-base-content">{% trans "Marketing emails" %}</span><br>
+                        {% trans "Product news, tips, and promotional offers." %}
+                    </span>
+                </label>
+                <button type="submit" class="btn btn-primary w-full">{% trans "Continue" %}</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}{% endraw %}
