@@ -8,6 +8,7 @@ def test_keel_seo_wired_when_enabled(generate):
     project = generate(
         use_keel_seo=True,
         use_programmatic_seo=True,
+        in_keel_monorepo=True,
         frontend="htmx-tailwind",
         frontend_bundling="vite",
     )
@@ -31,7 +32,34 @@ def test_keel_seo_wired_when_enabled(generate):
 
     pyproject = (project / "pyproject.toml").read_text()
     assert '"keel-seo[pseo]"' in pyproject
+    # In-monorepo generation resolves keel-seo from the uv workspace.
     assert "keel-seo = { workspace = true }" in pyproject
+
+
+def test_keel_seo_uv_standalone_omits_workspace_source(generate):
+    """Standalone (default) keeps the dependency but not the workspace source."""
+    project = generate(use_keel_seo=True, in_keel_monorepo=False)
+
+    pyproject = (project / "pyproject.toml").read_text()
+    assert '"keel-seo' in pyproject  # dependency still declared
+    assert "workspace = true" not in pyproject  # would break a standalone uv sync
+
+
+def test_keel_seo_poetry_dependency_wired(generate):
+    """The Poetry pyproject also declares keel-seo (no ModuleNotFoundError at startup)."""
+    project = generate(
+        dependency_manager="poetry",
+        use_keel_seo=True,
+        use_programmatic_seo=True,
+        in_keel_monorepo=True,
+    )
+
+    pyproject = (project / "pyproject.toml").read_text()
+    assert "keel-seo" in pyproject
+    assert 'extras = ["pseo"]' in pyproject
+
+    settings = (project / "config/settings/base.py").read_text()
+    assert '"keel_seo",' in settings
 
 
 def test_keel_seo_excluded_when_disabled(generate):
@@ -51,7 +79,7 @@ def test_keel_seo_excluded_when_disabled(generate):
 
 def test_programmatic_seo_flag_gates_engine(generate):
     """use_keel_seo without programmatic SEO wires Layer 1/3 but not the pSEO app."""
-    project = generate(use_keel_seo=True, use_programmatic_seo=False)
+    project = generate(use_keel_seo=True, use_programmatic_seo=False, in_keel_monorepo=True)
 
     settings = (project / "config/settings/base.py").read_text()
     assert '"keel_seo",' in settings

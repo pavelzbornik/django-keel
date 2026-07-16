@@ -101,6 +101,16 @@ labbui = "^0.4.4"
 django-extensions = "^3.2.0"
 python-dotenv = "^1.0.0"
 django-alive = "^1.3.0"
+{% if use_keel_seo -%}
+# Shared Keel SEO/GEO component (ADR-069).
+{% if in_keel_monorepo -%}
+keel-seo = { path = "../../libs/keel-seo", develop = true{% if use_programmatic_seo %}, extras = ["pseo"] {% endif %}}
+{% else -%}
+# Standalone project: publish keel-seo or add a git source, e.g.
+# keel-seo = { git = "<repo-url>", subdirectory = "libs/keel-seo" }
+keel-seo = {% if use_programmatic_seo %}{ version = "*", extras = ["pseo"] }{% else %}"*"{% endif %}
+{% endif -%}
+{% endif -%}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
