@@ -1,0 +1,38 @@
+"""Deterministic dev/test account definitions — single source of truth.
+
+Imported by the ``seed_dev_users`` command AND by test fixtures, so local dev,
+CI, and E2E browser tests all use identical credentials. This module MUST stay
+importable without importing any Django model; ``setup`` hooks import their
+models lazily inside the hook body.
+"""
+
+from __future__ import annotations
+
+import os
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any
+
+# Non-secret, well-known dev default. Never used when DEBUG is False.
+DEV_SEED_PASSWORD_DEFAULT = "devpassword123"  # gitleaks:allow  # nosec B105
+
+
+def dev_seed_password() -> str:
+    """Return the shared dev password (env override, well-known default)."""
+    return os.environ.get("DEV_SEED_PASSWORD", DEV_SEED_PASSWORD_DEFAULT)
+
+
+@dataclass(frozen=True)
+class DevAccount:
+    """One deterministic dev persona."""
+
+    email: str
+    is_staff: bool = False
+    is_superuser: bool = False
+    setup: Callable[[Any], None] | None = None
+
+
+DEV_ACCOUNTS: list[DevAccount] = [
+    DevAccount(email="admin@example.test", is_staff=True, is_superuser=True),
+    DevAccount(email="user@example.test"),
+]

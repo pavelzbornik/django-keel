@@ -1,0 +1,71 @@
+"""Seed deterministic dev/test accounts (idempotent, DEBUG-gated).
+
+Local dev + CI + E2E only. Refuses to run unless ``settings.DEBUG`` is True.
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand, CommandError
+from django.db import transaction
+
+from apps.core.dev_accounts import DEV_ACCOUNTS, DevAccount, dev_seed_password
+
+
+class Command(BaseCommand):
+    """Create the stable dev/test accounts defined in ``dev_accounts.DEV_ACCOUNTS``."""
+
+    help = "Seed deterministic dev/test accounts (DEBUG only)."
+
+    def handle(self, *args: Any, **options: Any) -> None:  # noqa: ARG002
+        if not settings.DEBUG:
+            raise CommandError(
+                "seed_dev_users refuses to run with DEBUG=False (non-production only)."
+            )
+        password = dev_seed_password()
+        user_model = get_user_model()
+        for spec in DEV_ACCOUNTS:
+            self._seed(user_model, spec, password)
+        self._report()
+
+    def _seed(self, user_model: Any, spec: DevAccount, password: str) -> None:
+        with transaction.atomic():
+            user, _created = user_model.objects.get_or_create(
+                **{user_model.USERNAME_FIELD: spec.email}
+            )
+            user.is_staff = spec.is_staff
+            user.is_superuser = spec.is_superuser
+            user.email = spec.email
+            user.set_password(password)
+            user.save()
+            self._verify_email(user)
+            if spec.setup is not None:
+                spec.setup(user)
+
+    @staticmethod
+    def _verify_email(user: Any) -> None:
+        """Mark the email verified so allauth mandatory-verification apps can log in.
+
+        No-op when django-allauth is not installed.
+        """
+        try:
+            from allauth.account.models import EmailAddress
+        except ImportError:
+            return
+        EmailAddress.objects.update_or_create(
+            user=user,
+            email=user.email,
+            defaults={"verified": True, "primary": True},
+        )
+
+    def _report(self) -> None:
+        self.stdout.write(self.style.SUCCESS("\nDev accounts seeded (DEBUG only):"))
+        for spec in DEV_ACCOUNTS:
+            role = "superuser" if spec.is_superuser else "user"
+            self.stdout.write(f"  {spec.email:32} {role:10} password set")
+        self.stdout.write(
+            "  password from $DEV_SEED_PASSWORD (default documented in apps/CLAUDE.md)"
+        )

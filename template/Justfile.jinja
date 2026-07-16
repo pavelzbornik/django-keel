@@ -47,6 +47,11 @@ migrate:
 createsuperuser:
     {% if dependency_manager == 'uv' -%}uv run {% endif %}python manage.py createsuperuser
 
+# Seed deterministic dev/test accounts (DEBUG only)
+seed:
+    {% if dependency_manager == 'uv' -%}uv run {% endif %}python manage.py migrate
+    {% if dependency_manager == 'uv' -%}uv run {% endif %}python manage.py seed_dev_users
+
 # Docker compose up
 up:
     docker compose up -d

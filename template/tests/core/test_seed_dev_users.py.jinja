@@ -1,0 +1,65 @@
+"""Tests for the seed_dev_users management command (baseline template)."""
+
+import pytest
+from django.contrib.auth import get_user_model
+from django.core.management import call_command
+from django.core.management.base import CommandError
+from django.test import override_settings
+
+pytestmark = pytest.mark.django_db
+
+
+@override_settings(DEBUG=True)
+def test_seeds_baseline_accounts() -> None:
+    call_command("seed_dev_users")
+    User = get_user_model()
+    assert User.objects.filter(
+        email="admin@example.test", is_superuser=True, is_staff=True
+    ).exists()
+    assert User.objects.filter(email="user@example.test", is_superuser=False).exists()
+
+
+@override_settings(DEBUG=True)
+def test_password_matches_contract() -> None:
+    call_command("seed_dev_users")
+    admin = get_user_model().objects.get(email="admin@example.test")
+    assert admin.check_password("devpassword123")
+
+
+@override_settings(DEBUG=True)
+def test_idempotent_user_count() -> None:
+    call_command("seed_dev_users")
+    count = get_user_model().objects.count()
+    call_command("seed_dev_users")
+    assert get_user_model().objects.count() == count
+
+
+@override_settings(DEBUG=True)
+def test_reasserts_superuser_flag() -> None:
+    call_command("seed_dev_users")
+    User = get_user_model()
+    admin = User.objects.get(email="admin@example.test")
+    admin.is_superuser = False
+    admin.save(update_fields=["is_superuser"])
+    call_command("seed_dev_users")
+    admin.refresh_from_db()
+    assert admin.is_superuser is True
+
+
+@override_settings(DEBUG=False)
+def test_refuses_without_debug() -> None:
+    with pytest.raises(CommandError):
+        call_command("seed_dev_users")
+    assert get_user_model().objects.count() == 0
+
+
+@override_settings(DEBUG=True)
+def test_seeded_admin_email_is_verified() -> None:
+    # allauth mandatory-verification apps need a verified EmailAddress to log in.
+    pytest.importorskip("allauth")
+    from allauth.account.models import EmailAddress
+
+    call_command("seed_dev_users")
+    assert EmailAddress.objects.filter(
+        email="admin@example.test", verified=True, primary=True
+    ).exists()
