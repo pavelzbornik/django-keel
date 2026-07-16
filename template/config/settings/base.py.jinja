@@ -39,8 +39,11 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-{% if use_i18n or auth_backend in ['allauth', 'both'] -%}
+{% if use_i18n or auth_backend in ['allauth', 'both'] or use_keel_seo -%}
     "django.contrib.sites",
+{% endif -%}
+{% if use_keel_seo -%}
+    "django.contrib.sitemaps",
 {% endif -%}
 ]
 
@@ -95,6 +98,12 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
+{% if use_keel_seo -%}
+    "keel_seo",
+{% if use_programmatic_seo -%}
+    "keel_seo.pseo",
+{% endif -%}
+{% endif -%}
     "apps.core",
     "apps.users",
 {% if api_style != 'none' -%}
@@ -160,6 +169,9 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
 {% if use_i18n -%}
                 "django.template.context_processors.i18n",
+{% endif -%}
+{% if use_keel_seo -%}
+                "keel_seo.context_processors.seo_defaults",
 {% endif -%}
                 "apps.users.impersonation.impersonation_context",
             ],
@@ -489,3 +501,13 @@ DJSTRIPE_USE_NATIVE_JSONFIELD = True
 SITE_NAME = env("SITE_NAME", default="{{ project_name }}")
 SITE_URL = env("SITE_URL", default="http://localhost:8000")
 SUPPORT_EMAIL = env("SUPPORT_EMAIL", default=DEFAULT_FROM_EMAIL)
+{% if use_keel_seo %}
+# SEO / GEO (keel-seo, ADR-069)
+SEO_DEFAULT_DESCRIPTION = env("SEO_DEFAULT_DESCRIPTION", default="")
+SEO_TWITTER_HANDLE = env("SEO_TWITTER_HANDLE", default="")
+SEO_ANALYTICS_UMAMI_ID = env("SEO_ANALYTICS_UMAMI_ID", default="")
+{% if not use_i18n -%}
+# No i18n_patterns → serve one URL per page and disable hreflang alternates.
+SEO_HREFLANG_ENABLED = False
+{% endif -%}
+{% endif %}
