@@ -6,6 +6,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% raw %}{% block title %}{% endraw %}{{ project_name }}{% raw %}{% endblock %}{% endraw %}</title>
+{% if use_keel_seo %}
+    {% raw %}{# keel-seo: canonical, Open Graph, Twitter, hreflang + analytics (ADR-069) #}
+    {% load keel_seo %}
+    {% seo_head with_title=False %}
+    {% analytics %}{% endraw %}
+{% endif %}
 
 {% if frontend_bundling == 'vite' %}
     {% raw %}{% vite_hmr_client %}{% endraw %}

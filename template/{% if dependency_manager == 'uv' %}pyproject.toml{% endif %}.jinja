@@ -103,6 +103,16 @@ dependencies = [
     "django-extensions>=3.2.0",
     "python-dotenv>=1.0.0",
     "django-alive>=1.3.0",
+{% if use_keel_seo -%}
+    # Shared Keel SEO/GEO component (ADR-069).
+{% if in_keel_monorepo -%}
+    # Resolved from the django-saas-monorepo uv workspace (source below).
+{% else -%}
+    # Standalone project: publish keel-seo to your index or add a source, e.g.
+    # [tool.uv.sources] keel-seo = { git = "<repo-url>", subdirectory = "libs/keel-seo" }
+{% endif -%}
+    "keel-seo{% if use_programmatic_seo %}[pseo]{% endif %}",
+{% endif -%}
 ]
 
 [project.optional-dependencies]
@@ -152,6 +162,10 @@ packages = ["apps", "config"]
 
 [tool.uv]
 dev-dependencies = []
+{% if use_keel_seo and in_keel_monorepo %}
+[tool.uv.sources]
+keel-seo = { workspace = true }
+{% endif %}
 
 [tool.ruff]
 line-length = 100

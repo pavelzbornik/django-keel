@@ -3,16 +3,32 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
-
+{% if use_keel_seo %}
+from keel_seo.sitemaps import StaticViewSitemap, register
+from keel_seo.urls import seo_urlpatterns
+{% if use_programmatic_seo -%}
+from keel_seo.pseo.sitemaps import PseoSitemap
+{% endif %}
+# SEO sitemap sections (keel-seo registry, ADR-069)
+register("static", StaticViewSitemap(names=["index"]{% if use_i18n %}, i18n=True{% endif %}))
+{% if use_programmatic_seo -%}
+register("pseo", PseoSitemap)
+{% endif -%}
+{% else %}
 from apps.core.views import robots_txt, sitemap
-
+{% endif %}
 urlpatterns = [
     path("admin/", admin.site.urls),
     # Health checks - django-alive provides standardized endpoints
     path("health/", include("django_alive.urls")),
+{% if use_keel_seo -%}
+    # SEO surface: sitemap.xml, robots.txt, llms.txt (keel-seo, ADR-069)
+    *seo_urlpatterns,
+{% else -%}
     # SEO surface (no language prefix)
     path("sitemap.xml", sitemap, name="sitemap"),
     path("robots.txt", robots_txt, name="robots-txt"),
+{% endif -%}
     path("", include("apps.core.urls")),
 {% if api_style != 'none' -%}
     path("api/", include("apps.api.urls")),

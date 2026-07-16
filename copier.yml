@@ -279,6 +279,30 @@ use_i18n:
   help: Enable internationalization?
   default: false
 
+# SEO / marketing (keel-seo shared component, ADR-069)
+use_keel_seo:
+  type: bool
+  help: Include keel-seo (SEO head tags, sitemaps, robots, llms.txt, analytics)?
+  default: >-
+    {%- if project_type in ['saas', 'web-app'] -%}true
+    {%- else -%}false{%- endif -%}
+
+use_programmatic_seo:
+  type: bool
+  help: Include the programmatic-SEO engine (data-driven long-tail landing pages)?
+  when: "{{ use_keel_seo }}"
+  default: >-
+    {%- if project_type in ['saas', 'web-app'] -%}true
+    {%- else -%}false{%- endif -%}
+
+in_keel_monorepo:
+  type: bool
+  help: >-
+    Generated inside the django-saas-monorepo? (resolves keel-seo via the uv
+    workspace / a local path source; leave false for a standalone project)
+  when: "{{ use_keel_seo }}"
+  default: false
+
 # CI/CD
 ci_provider:
   type: str
