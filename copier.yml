@@ -298,9 +298,8 @@ use_programmatic_seo:
 in_keel_monorepo:
   type: bool
   help: >-
-    Generated inside the django-saas-monorepo? (resolves keel-seo via the uv
-    workspace / a local path source; leave false for a standalone project)
-  when: "{{ use_keel_seo }}"
+    Generated inside the django-saas-monorepo? (resolves the shared keel-* libs
+    via the uv workspace / a local path source; leave false for a standalone project)
   default: false
 
 # CI/CD

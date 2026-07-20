@@ -1,0 +1,17 @@
+"""Seed stable dev/test accounts (admin@{{ project_slug }}.test etc.). DEBUG only."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from django.core.management.base import BaseCommand
+
+from apps.core.dev_accounts import DEV_ACCOUNTS
+from keel_devseed import dev_seed_password, seed_dev_users
+
+
+class Command(BaseCommand):
+    help = "Seed stable dev/test accounts for local dev and CI (DEBUG only)."
+
+    def handle(self, *_args: Any, **_options: Any) -> None:
+        seed_dev_users(DEV_ACCOUNTS, password=dev_seed_password(), write=self.stdout.write)

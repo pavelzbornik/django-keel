@@ -1,0 +1,15 @@
+"""Stable dev/test personas for {{ project_name }} (see keel_devseed).
+
+Model-free at import time: import any models lazily inside a ``setup`` hook so this module
+is safe to import before the app registry is ready. Add app-specific personas (with
+persona-scoped, ``dev-``-prefixed natural keys) as the app grows.
+"""
+
+from __future__ import annotations
+
+from keel_devseed import Persona
+
+DEV_ACCOUNTS = [
+    Persona(email="admin@{{ project_slug }}.test", is_staff=True, is_superuser=True),
+    Persona(email="user@{{ project_slug }}.test"),
+]

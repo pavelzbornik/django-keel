@@ -47,6 +47,12 @@ migrate:
 createsuperuser:
     {% if dependency_manager == 'uv' -%}uv run {% endif %}python manage.py createsuperuser
 
+# Seed stable dev/test login accounts (admin@{{ project_slug }}.test / DEV_SEED_PASSWORD).
+# DEBUG-only and idempotent; edit apps/core/dev_accounts.py to add personas.
+seed:
+    {% if dependency_manager == 'uv' -%}uv run {% endif %}python manage.py migrate
+    {% if dependency_manager == 'uv' -%}uv run {% endif %}python manage.py seed_dev_users
+
 # Docker compose up
 up:
     docker compose up -d
