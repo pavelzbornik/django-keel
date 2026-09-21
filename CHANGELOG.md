@@ -61,6 +61,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Development Tools
 - Ruff for linting and formatting
 - mypy for type checking
+- import-linter architecture contracts in `.importlinter`, enforcing layering
+  (presentation -> application -> domain) and the API as a delivery edge, wired
+  into `just arch-check`, `just check` and a pre-commit hook
 - pre-commit hooks
 - pytest test suite
 - Justfile with 50+ common tasks
