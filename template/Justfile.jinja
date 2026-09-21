@@ -28,8 +28,12 @@ lint:
 typecheck:
     {% if dependency_manager == 'uv' -%}uv run {% endif %}mypy .
 
+# Check the architecture contracts in .importlinter
+arch-check:
+    PYTHONPATH=. {% if dependency_manager == 'uv' -%}uv run {% endif %}lint-imports --no-logo
+
 # Run all quality checks
-check: lint typecheck test
+check: lint typecheck arch-check test
 
 # Django shell
 shell:

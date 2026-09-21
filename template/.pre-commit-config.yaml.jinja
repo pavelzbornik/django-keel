@@ -27,3 +27,12 @@ repos:
 {%- if api_style in ['drf', 'both'] %}
           - djangorestframework-stubs
 {%- endif %}
+
+  - repo: local
+    hooks:
+      - id: arch-contracts
+        name: Architecture import contracts (import-linter)
+        entry: bash -c 'PYTHONPATH=. {% if dependency_manager == 'uv' %}uv run {% endif %}lint-imports --no-logo'
+        language: system
+        pass_filenames: false
+        files: ^(apps/.*\.py|\.importlinter)$
