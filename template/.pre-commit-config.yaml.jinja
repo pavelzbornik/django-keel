@@ -32,7 +32,9 @@ repos:
     hooks:
       - id: arch-contracts
         name: Architecture import contracts (import-linter)
-        entry: bash -c 'PYTHONPATH=. {% if dependency_manager == 'uv' %}uv run {% endif %}lint-imports --no-logo'
+        # Git runs hooks without the project venv activated, so go through the
+        # manager - the same as the generated CI does for ruff, mypy and pytest.
+        entry: bash -c 'PYTHONPATH=. {% if dependency_manager == 'uv' %}uv run{% else %}poetry run{% endif %} lint-imports --no-logo'
         language: system
         pass_filenames: false
         files: ^(apps/.*\.py|\.importlinter)$

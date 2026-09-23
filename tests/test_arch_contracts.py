@@ -67,17 +67,26 @@ class TestGeneratedConfiguration:
         assert "importlinter:contract:delivery-edges" not in parsed
 
     @pytest.mark.parametrize("manager", ["uv", "poetry"])
-    def test_the_runner_follows_the_template_convention(self, generate, manager):
-        # The template prefixes commands with `uv run` only under uv; poetry
-        # projects call the console script directly, as `test` and `lint` do.
-        project = generate(project_slug=f"runner_{manager}", dependency_manager=manager)
-        prefix = "uv run " if manager == "uv" else ""
+    def test_the_hook_runs_through_the_manager(self, generate, manager):
+        # Git runs hooks without the project venv activated, so the hook must go
+        # through the manager - as the generated CI does for ruff, mypy, pytest.
+        project = generate(project_slug=f"hook_{manager}", dependency_manager=manager)
 
-        for path in ("Justfile", ".pre-commit-config.yaml"):
-            content = (project / path).read_text()
-            assert f"{prefix}lint-imports --no-logo" in content
-            if manager == "poetry":
-                assert "uv run lint-imports" not in content
+        hook = (project / ".pre-commit-config.yaml").read_text()
+        assert f"{manager} run lint-imports --no-logo" in hook
+
+    @pytest.mark.parametrize("manager", ["uv", "poetry"])
+    def test_the_recipe_matches_its_sibling_recipes(self, generate, manager):
+        # The Justfile is interactive: under poetry every recipe (test, lint,
+        # typecheck) calls its tool bare, expecting an activated venv.
+        project = generate(project_slug=f"recipe_{manager}", dependency_manager=manager)
+        justfile = (project / "Justfile").read_text()
+
+        if manager == "uv":
+            assert "uv run lint-imports --no-logo" in justfile
+        else:
+            assert "PYTHONPATH=. lint-imports --no-logo" in justfile
+            assert "\n    pytest\n" in justfile  # the `test` sibling is bare too
 
     def test_records_no_pre_existing_debt(self, generate):
         parsed = read_contracts(generate(api_style="drf", use_stripe=True, use_teams=True))
@@ -109,6 +118,21 @@ class TestContractsHoldInAGeneratedProject:
         result = self._lint(project)
 
         assert result.returncode == 0, result.stdout
+
+    def test_a_boundary_violation_fails_the_check(self, generate):
+        # Without this, a misconfigured contract that can never fire would still
+        # pass both tests above.
+        project = generate(project_slug="violating", api_style="drf")
+        models = project / "apps" / "users" / "models.py"
+        models.write_text(
+            models.read_text() + "\nfrom apps.api import urls as _violation  # noqa\n"
+        )
+
+        result = self._lint(project)
+
+        assert result.returncode != 0
+        assert "api is a delivery edge - nothing may import it BROKEN" in result.stdout
+        assert "apps.users.models -> apps.api.urls" in result.stdout
 
     def test_a_minimal_project_satisfies_its_own_contracts(self, generate):
         project = generate(api_style="none", use_stripe=False, use_teams=False)
