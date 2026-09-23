@@ -36,6 +36,7 @@ dev = [
     "pytest-xdist>=3.8.0",
     "pytest-timeout>=2.4.0",
     "copier>=9.14.3",
+    "import-linter>=2.3",  # runs the generated project's contracts in tests
     "pyyaml>=6.0.3",
     "types-PyYAML>=6.0.12.20260408",
     "ruff>=0.15.10",

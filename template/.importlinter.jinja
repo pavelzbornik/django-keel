@@ -1,0 +1,58 @@
+# Architecture contracts for {{ project_name }}.
+#
+#   just arch-check
+#
+# `import-linter` reads this file and fails when an import crosses a boundary the
+# project has decided to keep. It is static analysis over the import graph: no
+# Django bootstrap, no database, no secrets, about a second to run.
+#
+# Anything added under an `ignore_imports` key is pre-existing debt, recorded so a
+# contract can land green. Treat that list the way you treat `# type: ignore`: it
+# may shrink, never grow.
+
+[importlinter]
+root_package = apps
+exclude_type_checking_imports = True
+
+# Domain logic flows one way. A model may not reach back up into the view that
+# rendered it, and a view may not be imported by the service it calls. Every layer
+# is optional - an app without a services/ package simply has no middle layer.
+[importlinter:contract:layers]
+name = Layering (presentation -> application -> domain)
+type = layers
+layers =
+    (admin) : (forms) : (urls) : (views) : (serializers)
+    (tasks) : (services) : (selectors)
+    (models) : (managers) : (querysets)
+containers =
+{%- if api_style != 'none' %}
+    apps.api
+{%- endif %}
+{%- if use_stripe %}
+    apps.billing
+{%- endif %}
+    apps.core
+{%- if use_teams %}
+    apps.teams
+{%- endif %}
+    apps.users
+{%- if api_style != 'none' %}
+
+# The API is a delivery surface: it may reach into the domain, but nothing in the
+# domain may reach back into it. Breaking this is how an HTTP concern ends up
+# imported by a Celery task.
+[importlinter:contract:delivery-edges]
+name = api is a delivery edge - nothing may import it
+type = forbidden
+source_modules =
+{%- if use_stripe %}
+    apps.billing
+{%- endif %}
+    apps.core
+{%- if use_teams %}
+    apps.teams
+{%- endif %}
+    apps.users
+forbidden_modules =
+    apps.api
+{%- endif %}
